@@ -1,0 +1,16 @@
+gup new pk
+> (host)
+> (directory)
+> (method [rsync])
+> (rsync arguments [-avz])
+> (repo directory [/var/gup/repos/pk/])
+
+!mkdir /var/lib/repo/pk
+!cd /var/lib/repo/pk
+!git init
+rsync $user@$host:$directory .
+git add .
+# if there's what to commit
+git commit -a -m "Update $repo repo"
+git tag -a -m "$date"
+

@@ -1,0 +1,9 @@
+#!perl
+
+use strict;
+use warnings;
+
+use Gup::App;
+
+exit Gup::App->new->run;
+
