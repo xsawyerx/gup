@@ -24,11 +24,10 @@ sub parse_args {
         'd|dir=s'       => \$opts{'dir'},
         'h|host=s'      => \$opts{'host'},
         'p|port=s'      => \$opts{'port'},
-        'repodir=s'     => \$opts{'repo_dir'},
+        'reposdir=s'    => \$opts{'repos_dir'},
         'm|method=s'    => \$opts{'method'},
         'method-args=s' => \$opts{'method_args'},
         'confdir=s'     => \$opts{'conf_dir'},
-        'repodir=s'     => \$opts{'repo_dir'},
         'c|config=s'    => \$opts{'configfile'},
     );
 
