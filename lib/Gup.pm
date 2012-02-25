@@ -6,6 +6,7 @@ use Moo;
 use Carp;
 use Sub::Quote;
 use Git::Repository;
+use System::Command;
 
 has name => (
     is       => 'ro',
@@ -39,7 +40,7 @@ has conf_dir => (
     default => quote_sub(q{'/etc/gup'}),
 );
 
-has repo_dir => (
+has main_repo_dir => (
     is      => 'ro',
     default => quote_sub(q{'/var/gup/repos'}),
 );
@@ -54,6 +55,7 @@ has repo => (
     predicate => 'has_repo',
 );
 
+# TODO: allow to control the git user and email for this
 # creates a new repository
 sub create_repo {
     my $self     = shift;
@@ -67,7 +69,13 @@ sub create_repo {
 
     # init new repo
     Git::Repository->run( init      => $repo_dir );
-    Git::Repository->new( work_tree => $repo_dir );
+    my $repo = Git::Repository->new( work_tree => $repo_dir );
+
+    # create HEAD and first commit
+    # TODO: this needed? git symbolic-ref HEAD "refs/heads/$master_branch"
+    $repo->run( 'symbolic-ref', 'HEAD', 'refs/heads/master' );
+    $repo->run( commit => '--allow-empty', '-m', 'Initial commit' );
+
 }
 
 sub update_repo {
@@ -77,6 +85,7 @@ sub update_repo {
     chdir $repo_dir or die "Can't chdir to $repo_dir: $!\n";
 
     # sync directory
+    $self->sync_dir;
 
     # commit update
     my $repo = Git::Repository->new( git_dir => '.' );
@@ -84,7 +93,7 @@ sub update_repo {
 
 sub repo_dir {
     my $self = shift;
-    return File::Spec->catdir( $self->repo_dir, $self->name );
+    return File::Spec->catdir( $self->main_repo_dir, $self->name );
 }
 
 1;
