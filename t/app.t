@@ -1,13 +1,11 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use Test::More tests => 3;
+use Test::More tests => 2;
 
-use lib 'lib';
+use Gup::App;
 
-use_ok('Gup::App');
-
-my $gup_app = Gup::App->new( name => 'tests' );
+my $gup_app = Gup::App->new( name => 'test' );
 
 isa_ok( $gup_app, 'Gup::App' );
 can_ok( $gup_app, qw/parse_args run command_new/ ); 
