@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Gup;
-use Test::More  tests => 8;
+use Test::More  tests => 10;
 use File::Temp  'tempdir';
 use Test::Fatal 'exception';
 use Test::File;
@@ -47,6 +47,10 @@ close $fh or BAIL_OUT("Can't close file: $!");
 file_exists_ok( $testfile, "Repo test file $testfile created" );
 file_contains_like( $testfile, qr/this is a test line/, 'Correct output' );
 
+$repo->run( 'add', $testfile );
 $repo->run( 'commit', '-m', 'test commit' );
+
 my $output = $repo->run('log');
 
+like( $output, qr/Initial commit/, 'Correct initial commit' );
+like( $output, qr/test commit/   , 'Correct test commit'    );
