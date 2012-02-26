@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Gup;
-use Test::More  tests => 6;
+use Test::More  tests => 8;
 use File::Temp  'tempdir';
 use Test::Fatal 'exception';
 use Test::File;
@@ -18,10 +18,14 @@ ok(
 my $tempdir = tempdir( $ENV{'GUP_KEEPDIR'} ? () : ( CLEANUP => 1 ) );
 
 my $gup = Gup->new( name => 'test', main_repo_dir => $tempdir );
-isa_ok( $gup, 'Gup' );
+isa_ok( $gup, 'Gup'         );
+can_ok( $gup, 'create_repo' );
 
-$gup->create_repo;
+# get repo object and repo dir
+my $repo     = $gup->create_repo;
 my $repo_dir = $gup->repo_dir;
+
+isa_ok( $repo, 'Git::Repository' );
 
 dir_exists_ok(
     $repo_dir,
@@ -33,8 +37,9 @@ dir_exists_ok(
     'test repo .git dir exists',
 );
 
-my $repo     = Git::Repository->new( work_tree => $repo_dir );
 my $testfile = File::Spec->catfile( $repo_dir, 'test.txt' );
+
+# create a file with content, BAIL_OUT on tests if we don't succeed
 open my $fh, '>', $testfile or BAIL_OUT("Can't open file: $!");
 print {$fh} "this is a test line\n" or BAIL_OUT("Can't write to file: $!");
 close $fh or BAIL_OUT("Can't close file: $!");
