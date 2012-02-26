@@ -72,7 +72,6 @@ sub create_repo {
     my $repo = Git::Repository->new( work_tree => $repo_dir );
 
     # create HEAD and first commit
-    # TODO: this needed? git symbolic-ref HEAD "refs/heads/$master_branch"
     $repo->run( 'symbolic-ref', 'HEAD', 'refs/heads/master' );
     $repo->run( commit => '--allow-empty', '-m', 'Initial commit' );
 
