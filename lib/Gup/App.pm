@@ -31,9 +31,6 @@ sub parse_args {
         'c|config=s'    => \$opts{'configfile'},
     );
 
-    @ARGV      or die "Missing command to run\n";
-    @ARGV == 2 or die "Too many arguments\n";
-
     # clean up the opts hash
     foreach my $key ( keys %opts ) {
         exists $opts{$key} && ! defined $opts{$key}
@@ -41,7 +38,9 @@ sub parse_args {
     }
 
     # get command and name
-    my ( $command, $name ) = @ARGV;
+    my $command = shift @ARGV or die "Missing command to run\n";
+    my $name    = shift @ARGV or die "Missing repo name\n";
+
     my $method = "command_$command";
 
     # try to find if it's an option attempt or non-existent command
