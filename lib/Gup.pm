@@ -68,7 +68,7 @@ sub create_repo {
     mkdir $repo_dir or die "Can't mkdir $repo_dir: $!\n";
 
     # init new repo
-    Git::Repository->run( init      => $repo_dir );
+    Git::Repository->run( init => $repo_dir );
     my $repo = Git::Repository->new( work_tree => $repo_dir );
 
     # create HEAD and first commit
@@ -88,7 +88,7 @@ sub update_repo {
     $self->sync_dir;
 
     # commit update
-    my $repo = Git::Repository->new( git_dir => '.' );
+    my $repo = Git::Repository->new( work_tree => '.' );
 }
 
 sub repo_dir {
