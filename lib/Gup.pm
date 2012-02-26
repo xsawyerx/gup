@@ -76,6 +76,7 @@ sub create_repo {
     $repo->run( 'symbolic-ref', 'HEAD', 'refs/heads/master' );
     $repo->run( commit => '--allow-empty', '-m', 'Initial commit' );
 
+    return $repo;
 }
 
 sub update_repo {
