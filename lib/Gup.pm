@@ -40,7 +40,7 @@ has conf_dir => (
     default => quote_sub(q{'/etc/gup'}),
 );
 
-has main_repo_dir => (
+has repos_dir => (
     is      => 'ro',
     default => quote_sub(q{'/var/gup/repos'}),
 );
@@ -93,7 +93,7 @@ sub update_repo {
 
 sub repo_dir {
     my $self = shift;
-    return File::Spec->catdir( $self->main_repo_dir, $self->name );
+    return File::Spec->catdir( $self->repos_dir, $self->name );
 }
 
 1;
