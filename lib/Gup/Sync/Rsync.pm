@@ -31,10 +31,10 @@ has dir => (
 
 has args => (
     is       => 'ro',
+    default  => quote_sub(q{'-ac'}),
     isa      => quote_sub( q{
-        $_[0] =~ /^(?:[A-Za-z0-9_-]|\.|\/)*$/ or die "Improper dir: '$_[0]'\n";
+        $_[0] =~ /^(?:[A-Za-z0-9_-]|\.|\/)*$/ or die "Improper args: '$_[0]'\n";
     } ),
-    required => 1,
 );
 
 sub sync_dir {
