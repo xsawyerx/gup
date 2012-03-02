@@ -4,11 +4,17 @@ Creating gup repo:
     gup new repo -h --host rsync_host
                  -u --user rsync_user
                  -d --dir rsync_dir
-                 -a --args rsync_args ( default: -ac )
+                 -a --args rsync_args
+                    default: -ac
                  
-                 -r --reposdir all_repos_dir ( default: /var/gup/repos/               )
-                 -c --config config_file     ( defualt: /etc/gup/gup.yaml             )
-                 -m --method sync_method     ( default: rsync [not fully implemented] )
+                 -r --reposdir all_repos_dir
+                    default: /var/gup/repos/
+
+                 -c --config config_file
+                    default: /etc/gup/gup.yaml
+
+                 -m --method sync_method
+                    default: rsync
 
 Updating repo:
     gup update repo
