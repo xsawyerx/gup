@@ -29,8 +29,17 @@ has dir => (
     required => 1,
 );
 
+has args => (
+    is       => 'ro',
+    isa      => quote_sub( q{
+        $_[0] =~ /^(?:[A-Za-z0-9_-]|\.|\/)*$/ or die "Improper dir: '$_[0]'\n";
+    } ),
+    required => 1,
+);
+
 sub sync_dir {
     my $self = shift;
+    my $args = $self->args;
     my $host = $self->host;
     my $user = $self->user;
     my $path = $self->dir.'/';
@@ -43,7 +52,7 @@ sub sync_dir {
     # currently we hardcode rsync
     my $cmd = System::Command->new(
         'rsync',
-        '-ac',
+        $args,
         $path,'.',
         '--quiet',
         '--delete',
