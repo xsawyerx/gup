@@ -4,9 +4,14 @@ package Gup;
 
 use Moo;
 use Carp;
+use YAML::Tiny;
 use Sub::Quote;
 use Git::Repository;
 use System::Command;
+
+use POSIX qw(strftime);
+
+use Gup::Sync::Rsync;
 
 has name => (
     is       => 'ro',
@@ -81,6 +86,7 @@ sub create_repo {
 sub update_repo {
     my $self     = shift;
     my $repo_dir = $self->repo_dir;
+    my $date     = strftime "%Y%m%d - %H:%M", localtime;
 
     chdir $repo_dir or die "Can't chdir to $repo_dir: $!\n";
 
@@ -89,6 +95,37 @@ sub update_repo {
 
     # commit update
     my $repo = Git::Repository->new( work_tree => '.' );
+    $repo->run( 'add', '-A' );
+    $repo->run( 'commit', '-a', '-m', "Update $date" );
+}
+
+#TODO: Make sync_dir per many methods
+sub sync_dir {
+    my $self  = shift;
+    my $opts  = $self->get_sync_opts;
+    my $rsync = Gup::Sync::Rsync->new( $opts );
+
+    $rsync->sync_dir;
+}
+
+#TODO: Allow input options per method if it not defined
+# in the configfile
+sub get_sync_opts {
+    my $self       = shift;
+    my $configfile = $self->configfile;
+    my $repo_name  = $self->name;
+    my $method     = $self->method;
+
+    my $yaml = YAML::Tiny->read( $configfile )
+        or die "Can't read configs file: $configfile";
+
+    defined $yaml->[0]->{$repo_name}
+        or die "There are no configs for repo '$repo_name'";
+
+    defined $yaml->[0]->{$repo_name}->{$method}
+        or die "There are no configs for method '$method'";
+
+    return $yaml->[0]->{$repo_name}->{$method};
 }
 
 sub repo_dir {
