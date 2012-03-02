@@ -17,7 +17,7 @@ ok(
 
 my $tempdir = tempdir( $ENV{'GUP_KEEPDIR'} ? () : ( CLEANUP => 1 ) );
 
-my $gup = Gup->new( name => 'test', main_repo_dir => $tempdir );
+my $gup = Gup->new( name => 'test', repos_dir => $tempdir );
 isa_ok( $gup, 'Gup'         );
 can_ok( $gup, 'create_repo' );
 
