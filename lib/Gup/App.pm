@@ -6,6 +6,7 @@ use Moo;
 use Sub::Quote;
 
 use Gup;
+use Gup::Sync::Rsync;
 use Getopt::Long qw/:config no_ignore_case/;
 
 has gup => (
@@ -21,14 +22,14 @@ sub parse_args {
     my %opts = ();
 
     GetOptions(
+        'm|method=s'    => \$opts{'method'},
+        'reposdir=s'    => \$opts{'repos_dir'},
+        'c|config=s'    => \$opts{'configfile'},
+
         'd|dir=s'       => \$opts{'dir'},
         'h|host=s'      => \$opts{'host'},
-        'p|port=s'      => \$opts{'port'},
-        'reposdir=s'    => \$opts{'repos_dir'},
-        'm|method=s'    => \$opts{'method'},
-        'method-args=s' => \$opts{'method_args'},
-        'confdir=s'     => \$opts{'conf_dir'},
-        'c|config=s'    => \$opts{'configfile'},
+        'u|user=s'      => \$opts{'user'},
+        'method_args=s' => \$opts{'args'},
     );
 
     # clean up the opts hash
@@ -49,10 +50,9 @@ sub parse_args {
 
     # create Gup object
     $opts{'name'} = $name;
-
     $self->set_gup( Gup->new(%opts) );
 
-    return $self->$method(%opts);
+    exit $self->$method(%opts);
 }
 
 sub run {
@@ -60,24 +60,59 @@ sub run {
     $self->parse_args;
 }
 
-sub command_new {
+sub command_update {
     my $self = shift;
     my %opts = @_;
 
-    # check that all attributes exist
-    if ( ! defined $opts{'host'} ) {
-        print 'host: ';
-        chomp( my $input = <STDIN> );
+    print $self->gup->update_repo."\n";
+    return 0;
+}
 
-        $input =~ s/^\s*//g;
-        $input =~ s/\s*$//g;
-        $input or die "Must provide a host\n";
-        $input =~ /^(?:[A-Za-z0-9_-]|\.)+$/ or die "Improper host name\n";
+sub command_new {
+    my $self = shift;
+    my %opts = @_;
+    my $yaml = undef;
+    
+    my $configfile = $self->gup->configfile;
+    my $repo_name  = $self->gup->name;
+    my $repo_dir   = $self->gup->repo_dir;
+    my $method     = $self->gup->method;
 
-        $opts{'host'} = $input;
+    # Rsync method argument that should be defined
+    my %method_attributes = (
+        args => '-ac',
+        host => undef,
+        user => undef,
+        dir  => undef,
+    );
+
+    # Get arguments from user if his not define them
+    foreach my $arg ( keys %method_attributes ) {
+        $method_attributes{$arg} = $opts{$arg}
+            if defined $opts{$arg};
+
+        if( not defined $method_attributes{$arg} ) {
+            print "$method $arg should be defined: ";
+            chomp( my $input = <STDIN> );
+            $input =~ s/^\s*//g;
+            $input =~ s/\s*$//g;
+            $method_attributes{$arg} = $input;
+        }
     }
 
-    $self->gup->create_repo;
+    # validate params
+    Gup::Sync::Rsync->new( %method_attributes );
+
+    # Write attributes to configfile
+    ( -r $configfile and $yaml = YAML::Tiny->read( $configfile ) )
+        or $yaml = YAML::Tiny->new;
+
+    $yaml->[0]->{$repo_name}->{$method} = \%method_attributes;
+    $yaml->write( $configfile ) or die "Can't write to configfile: $configfile";
+
+    $self->gup->create_repo
+        and print "Repo $repo_name successfully created at $repo_dir\n";
+    return 0;
 }
 
 1;
