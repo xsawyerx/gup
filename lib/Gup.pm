@@ -16,13 +16,9 @@ use Gup::Sync::Rsync;
 has name => (
     is       => 'ro',
     isa      => quote_sub( q{
-        $_[0] =~ /^(?:[A-Za-z0-9_-]|\.)+$/ or die "Improper name: '$_[0]'\n";
+        $_[0] =~ /^(?:[A-Za-z0-9_-]|\.)+$/ or die "Improper repo name: '$_[0]'\n";
     } ),
     required => 1,
-);
-
-has dir => (
-    is => 'ro',
 );
 
 has method => (
@@ -30,19 +26,9 @@ has method => (
     default => quote_sub(q{'rsync'}),
 );
 
-has method_args => (
-    is      => 'ro',
-    default => quote_sub(q{'-az'}),
-);
-
 has configfile => (
     is      => 'ro',
     default => quote_sub(q{'/etc/gup/gup.yaml'}),
-);
-
-has conf_dir => (
-    is      => 'ro',
-    default => quote_sub(q{'/etc/gup'}),
 );
 
 has repos_dir => (
