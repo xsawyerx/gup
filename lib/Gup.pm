@@ -9,6 +9,7 @@ use Sub::Quote;
 use Git::Repository;
 use System::Command;
 
+use File::Path qw(make_path);
 use POSIX qw(strftime);
 
 use Gup::Sync::Rsync;
@@ -56,7 +57,7 @@ sub create_repo {
     -d $repo_dir and croak "Repo dir '$repo_dir' already exists";
 
     # create it
-    mkdir $repo_dir or die "Can't mkdir $repo_dir: $!\n";
+    makepath( $repo_dir ) or die "Can't mkdir $repo_dir: $!\n";
 
     # init new repo
     Git::Repository->run( init => $repo_dir );
