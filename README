@@ -1,16 +1,15 @@
-gup new pk
-> (host)
-> (directory)
-> (method [rsync])
-> (rsync arguments [-avz])
-> (repo directory [/var/gup/repos/pk/])
+Gup - Git Backup tool
 
-!mkdir /var/lib/repo/pk
-!cd /var/lib/repo/pk
-!git init
-rsync $user@$host:$directory .
-git add .
-# if there's what to commit
-git commit -a -m "Update $repo repo"
-git tag -a -m "$date"
+Creating gup repo:
+    gup new repo -h --host rsync_host
+                 -u --user rsync_user
+                 -d --dir rsync_dir
+                 -a --args rsync_args ( default: -ac )
+                 
+                 -r --reposdir all_repos_dir ( default: /var/gup/repos/               )
+                 -c --config config_file     ( defualt: /etc/gup/gup.yaml             )
+                 -m --method sync_method     ( default: rsync [not fully implemented] )
+
+Updating repo:
+    gup update repo
 
