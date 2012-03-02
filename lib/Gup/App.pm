@@ -22,14 +22,14 @@ sub parse_args {
     my %opts = ();
 
     GetOptions(
-        'm|method=s'    => \$opts{'method'},
-        'reposdir=s'    => \$opts{'repos_dir'},
-        'c|config=s'    => \$opts{'configfile'},
+        'm|method=s'      => \$opts{'method'},
+        'r|reposdir=s'    => \$opts{'repos_dir'},
+        'c|config=s'      => \$opts{'configfile'},
 
-        'd|dir=s'       => \$opts{'dir'},
-        'h|host=s'      => \$opts{'host'},
-        'u|user=s'      => \$opts{'user'},
-        'method_args=s' => \$opts{'args'},
+        'd|dir=s'         => \$opts{'dir'},
+        'h|host=s'        => \$opts{'host'},
+        'u|user=s'        => \$opts{'user'},
+        'a|method_args=s' => \$opts{'args'},
     );
 
     # clean up the opts hash
