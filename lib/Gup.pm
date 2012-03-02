@@ -92,11 +92,14 @@ sub update_repo {
 
     # sync directory
     $self->sync_dir;
+    
+    my $repo = Git::Repository->new( work_tree => '.' );
+
+    # Try to add new files
+    $repo->run( 'add', '-A' );
 
     # commit update
-    my $repo = Git::Repository->new( work_tree => '.' );
-    $repo->run( 'add', '-A' );
-    $repo->run( 'commit', '-a', '-m', "Update $date" );
+    return $repo->run( 'commit', '-a', '-m', "Update $date" );
 }
 
 #TODO: Make sync_dir per many methods
@@ -108,8 +111,6 @@ sub sync_dir {
     $rsync->sync_dir;
 }
 
-#TODO: Allow input options per method if it not defined
-# in the configfile
 sub get_sync_opts {
     my $self       = shift;
     my $configfile = $self->configfile;
