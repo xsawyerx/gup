@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Gup;
-use Test::More  tests => 15;
+use Test::More  tests => 14;
 use Test::Fatal 'exception';
 use Test::File;
 use t::lib::Functions;
@@ -52,8 +52,7 @@ $gup->commit_updates(
 
 my $output = $repo->run('log');
 
-like( $output, qr/Initial commit/,          'Correct initial commit' );
-like( $output, qr/this is my test commit/ , 'Correct test commit'    );
+like( $output, qr/Initial commit/, 'Correct initial commit' );
 
 my $newfile = File::Spec->catfile( dirname($file), 'bgzzz' );
 copy( $file, $newfile );
