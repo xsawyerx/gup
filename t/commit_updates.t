@@ -4,10 +4,13 @@ use strict;
 use warnings;
 
 use Gup;
-use Test::More  tests => 9;
+use Test::More  tests => 15;
 use Test::Fatal 'exception';
 use Test::File;
 use t::lib::Functions;
+
+use File::Copy;
+use File::Basename;
 
 # this is basically t/create_repo.t
 # then we'll add extra stuff and try to commit the updates
@@ -51,4 +54,17 @@ my $output = $repo->run('log');
 
 like( $output, qr/Initial commit/,          'Correct initial commit' );
 like( $output, qr/this is my test commit/ , 'Correct test commit'    );
+
+my $newfile = File::Spec->catfile( dirname($file), 'bgzzz' );
+copy( $file, $newfile );
+file_exists_ok( $newfile, "Create new file: $newfile" );
+file_contains_like( $newfile, qr/this is a test line/, 'Correct output' );
+
+$gup->commit_updates();
+
+$output = $repo->run('log');
+
+like( $output, qr/Initial commit/,          'Correct initial commit' );
+like( $output, qr/this is my test commit/ , 'Correct test commit'    );
+like( $output, qr/\QGup commit:\E/,         'Got Gup commit!'        );
 
