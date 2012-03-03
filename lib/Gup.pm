@@ -12,8 +12,6 @@ use System::Command;
 use File::Path qw(mkpath);
 use POSIX qw(strftime);
 
-use Gup::Sync::Rsync;
-
 has name => (
     is       => 'ro',
     isa      => quote_sub( q{
@@ -47,6 +45,26 @@ has repo => (
     predicate => 'has_repo',
 );
 
+has _sync => ( is => 'rw' );
+
+# lazy build for sync
+sub sync {
+    my $self = shift;
+    
+    if( not defined $self->_sync ) {
+        my $package = 'Gup::Sync::'.ucfirst($self->method);
+        eval "use $package;" and $@ and die "Can't load $package $@";
+        $self->_sync( $package->new_from_configfile( $self ) );
+    }
+
+    return $self->_sync;
+}
+
+sub repo_dir {
+    my $self = shift;
+    return File::Spec->catdir( $self->repos_dir, $self->name );
+};
+
 # TODO: allow to control the git user and email for this
 # creates a new repository
 sub create_repo {
@@ -78,7 +96,7 @@ sub update_repo {
     chdir $repo_dir or die "Can't chdir to $repo_dir: $!\n";
 
     # sync directory
-    $self->sync_dir;
+    $self->sync->sync_dir;
     
     my $repo = Git::Repository->new( work_tree => '.' );
 
@@ -87,38 +105,6 @@ sub update_repo {
 
     # commit update
     return $repo->run( 'commit', '-a', '-m', "Update $date" );
-}
-
-#TODO: Make sync_dir per many methods
-sub sync_dir {
-    my $self  = shift;
-    my $opts  = $self->get_sync_opts;
-    my $rsync = Gup::Sync::Rsync->new( $opts );
-
-    $rsync->sync_dir;
-}
-
-sub get_sync_opts {
-    my $self       = shift;
-    my $configfile = $self->configfile;
-    my $repo_name  = $self->name;
-    my $method     = $self->method;
-
-    my $yaml = YAML::Tiny->read( $configfile )
-        or die "Can't read configs file: $configfile";
-
-    defined $yaml->[0]->{$repo_name}
-        or die "There are no configs for repo '$repo_name'";
-
-    defined $yaml->[0]->{$repo_name}->{$method}
-        or die "There are no configs for method '$method'";
-
-    return $yaml->[0]->{$repo_name}->{$method};
-}
-
-sub repo_dir {
-    my $self = shift;
-    return File::Spec->catdir( $self->repos_dir, $self->name );
 }
 
 1;

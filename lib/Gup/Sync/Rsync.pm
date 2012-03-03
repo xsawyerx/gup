@@ -1,9 +1,11 @@
 use strict;
 use warnings;
 package Gup::Sync::Rsync;
-
 use Moo;
 use Sub::Quote;
+use Time::HiRes qw( usleep );
+
+extends 'Gup::Sync';
 
 has host => (
     is       => 'ro',
@@ -59,8 +61,9 @@ sub sync_dir {
         '--exclude','.git',
     );
 
-    while( not $cmd->is_terminated() ){}
+    print 'Geting data...';
+    while( not $cmd->is_terminated() ){ print '.'; usleep(500000); }
+    print " done\n";
 }
 
 1;
-
