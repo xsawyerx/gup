@@ -6,6 +6,7 @@ Gup
     -> update_repo
     -> sync_repo
     -> commit_updates
+    -> publish/deploy (use git-deploy?)
 
     update_repo is basically:
         -> sync_repo
