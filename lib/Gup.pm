@@ -75,7 +75,7 @@ sub create_repo {
     -d $repo_dir and croak "Repo dir '$repo_dir' already exists";
 
     # create it
-    mkpath( $repo_dir ) or die "Can't mkdir $repo_dir: $!\n";
+    mkpath($repo_dir) or croak "Can't mkdir $repo_dir: $!\n";
 
     # init new repo
     Git::Repository->run( init => $repo_dir );
@@ -85,7 +85,28 @@ sub create_repo {
     $repo->run( 'symbolic-ref', 'HEAD', 'refs/heads/master' );
     $repo->run( commit => '--allow-empty', '-m', 'Initial commit' );
 
+    $self->set_repo($repo);
+
     return $repo;
+}
+
+sub commit_updates {
+    my $self = shift;
+
+    @_ % 2 == 0 or croak 'commit_updates() gets a hash as parameter';
+
+    my %opts    = @_ ;
+    my $message = defined $opts{'message'} ?
+                  $opts{'message'}         :
+                  'Gup commit: ' . strftime "%Y%m%d - %H:%M", localtime;
+
+    my $repo = $self->repo;
+
+    # add all
+    $repo->run( 'add', '-A' );
+
+    # commit update
+    return $self->repo->run( 'commit', '-a', '-m', $message );
 }
 
 sub update_repo {
@@ -96,6 +117,7 @@ sub update_repo {
     chdir $repo_dir or die "Can't chdir to $repo_dir: $!\n";
 
     # sync directory
+    # TODO: user syncer object and call sync() method on it
     $self->sync->sync_dir;
     
     my $repo = Git::Repository->new( work_tree => '.' );
