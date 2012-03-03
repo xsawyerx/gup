@@ -1,69 +1,47 @@
 use strict;
 use warnings;
 package Gup::Sync::Rsync;
+# ABSTRACT: Rsync sync method for Gup
+
 use Moo;
+use Carp;
 use Sub::Quote;
-use Time::HiRes qw( usleep );
+use System::Command;
 
-extends 'Gup::Sync';
-
-has host => (
-    is       => 'ro',
-    isa      => quote_sub( q{
-        $_[0] =~ /^(?:[A-Za-z0-9_-]|\.)*$/ or die "Improper host: '$_[0]'\n";
-    } ),
-    required => 1,
-);
-
-has user => (
-    is       => 'ro',
-    isa      => quote_sub( q{
-        $_[0] =~ /^(?:[A-Za-z0-9_-]|\.)*$/ or die "Improper user: '$_[0]'\n";
-    } ),
-    required => 1,
-);
-
-has dir => (
-    is       => 'ro',
-    isa      => quote_sub( q{
-        $_[0] =~ /^(?:[A-Za-z0-9_-]|\.|\/)+$/ or die "Improper dir: '$_[0]'\n";
-    } ),
-    required => 1,
-);
+with 'Gup::Role::Syncer';
 
 has args => (
-    is       => 'ro',
-    default  => quote_sub(q{'-ac'}),
-    isa      => quote_sub( q{
-        $_[0] =~ /^(?:[A-Za-z0-9_-]|\.|\/)*$/ or die "Improper args: '$_[0]'\n";
-    } ),
+    is      => 'ro',
+    default => quote_sub(q{'-acz'}),
 );
 
-sub sync_dir {
-    my $self = shift;
-    my $args = $self->args;
+sub sync {
+    my $self          = shift;
+    my ( $from, $to ) = @_;
+
+    length $from && length $to
+        or croak "sync( FROM, TO )";
     my $host = $self->host;
-    my $user = $self->user;
-    my $path = $self->dir.'/';
+    my $user = $self->username;
 
-    $path = $host.':'.$path
-        if $host ne '';
-    $path = $user.'@'.$path
-        if $host ne '' && $user ne '';
-
-    # currently we hardcode rsync
     my $cmd = System::Command->new(
         'rsync',
-        $args,
-        $path,'.',
-        '--quiet',
-        '--delete',
-        '--exclude','.git',
+        $self->args,
+        "$user\@$host:$from/",
+        $to,
     );
 
-    print 'Geting data...';
-    while( not $cmd->is_terminated() ){ print '.'; usleep(500000); }
-    print " done\n";
+    # finish
+    $cmd->close;
+
+    # return 1 for good, undef for rest
+    # TODO: we don't really document the errors
+    # should we call die/croak? should we return arrayref with it?
+    # what about stdout vs. stderr? tricky stuff...
+    return $cmd->exit == 0 ? 1 : undef;
 }
 
 1;
+
+__END__
+
