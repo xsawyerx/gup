@@ -1,0 +1,65 @@
+Gup::App
+
+Gup
+    General methods:
+    -> create_repo
+    -> update_repo
+    -> sync_repo
+    -> commit_updates
+
+    update_repo is basically:
+        -> sync_repo
+        -> commit_updates
+
+Gup is first written without ::App, ::App will be added later.
+
+Gup
+    -> provides main methods
+    -> for syncing, creates a new ::Sync object
+    -> calls ->sync on that object
+
+    Gup::Sync::
+        -> Sync methods for Gup
+        (Gup::Sync::Rsync)
+        (Gup::Sync::SSH / SFTP)
+        (Gup::Sync::FTP)
+        uses Gup::Role::Syncer
+
+    Gup::Role::
+        Gup::Role::Syncer
+            -> requires 'sync'
+            -> provides main attributes and base methods
+
+        Gup::Role::ConfigReader
+            -> allows reading configuration file(s)
+            -> could be part of Gup.pm at first
+            (used by Gup::App)
+
+        Gup::Role::Getopt
+            -> allows parsing options from command line
+            -> coudl be part of Gup.pm at first
+            (used by Gup::App)
+
+    Gup::Types::
+        -> Moo types for Gup
+        (Dancer implements these cleanly)
+
+
+Example
+-gup new pk
+-> (host)
+-> (directory)
+-> (method [rsync])
+-> (rsync arguments [-avz])
+-> (repo directory [/var/gup/repos/pk/])
++Gup - Git Backup tool
+
+-!mkdir /var/lib/repo/pk
+-!cd /var/lib/repo/pk
+-!git init
+-rsync $user@$host:$directory .
+-git add .
+-# if there's what to commit
+-git commit -a -m "Update $repo repo"
+-git tag -a -m "$date"
+
