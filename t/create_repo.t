@@ -7,7 +7,6 @@ use Gup;
 use Test::More  tests => 9;
 use Test::Fatal 'exception';
 use Test::File;
-use Git::Repository;
 use t::lib::Functions;
 
 my $dir = t::lib::Functions::create_test_dir;
