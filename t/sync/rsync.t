@@ -34,9 +34,9 @@ can_ok( $rsync, 'sync' );
 ok( $rsync->sync, 'sync method successful' );
 
 my $filename = basename $file;
-my $new_file = File::Spec->catfile( $to, $filename );
+my $newfile  = File::Spec->catfile( $to, $filename );
 
-file_exists_ok( $newfile, "$filename was synced to $to ($new_file)" );
+file_exists_ok( $newfile, "$filename was synced to $to ($newfile)" );
 file_not_empty_ok( $newfile, 'It is not empty' );
 
 file_contains_like(
