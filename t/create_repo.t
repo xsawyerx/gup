@@ -4,20 +4,15 @@ use strict;
 use warnings;
 
 use Gup;
-use Test::More  tests => 10;
-use File::Temp  'tempdir';
+use Test::More  tests => 9;
 use Test::Fatal 'exception';
 use Test::File;
 use Git::Repository;
+use t::lib::Functions;
 
-ok(
-    exception { Gup->new },
-    'Gup->new requires a name',
-);
+my $dir = t::lib::Functions::create_test_dir;
+my $gup = Gup->new( name => 'test', repos_dir => $dir );
 
-my $tempdir = tempdir( $ENV{'GUP_KEEPDIR'} ? () : ( CLEANUP => 1 ) );
-
-my $gup = Gup->new( name => 'test', repos_dir => $tempdir );
 isa_ok( $gup, 'Gup'         );
 can_ok( $gup, 'create_repo' );
 
@@ -26,6 +21,9 @@ my $repo     = $gup->create_repo;
 my $repo_dir = $gup->repo_dir;
 
 isa_ok( $repo, 'Git::Repository' );
+
+my $file = t::lib::Functions::create_test_file($repo_dir);
+diag("Created temp dir $dir");
 
 dir_exists_ok(
     $repo_dir,
@@ -37,20 +35,14 @@ dir_exists_ok(
     'test repo .git dir exists',
 );
 
-my $testfile = File::Spec->catfile( $repo_dir, 'test.txt' );
+file_exists_ok( $file, "Repo test file $file created" );
+file_contains_like( $file, qr/this is a test line/, 'Correct output' );
 
-# create a file with content, BAIL_OUT on tests if we don't succeed
-open my $fh, '>', $testfile or BAIL_OUT("Can't open file: $!");
-print {$fh} "this is a test line\n" or BAIL_OUT("Can't write to file: $!");
-close $fh or BAIL_OUT("Can't close file: $!");
-
-file_exists_ok( $testfile, "Repo test file $testfile created" );
-file_contains_like( $testfile, qr/this is a test line/, 'Correct output' );
-
-$repo->run( 'add', $testfile );
+$repo->run( 'add', $file );
 $repo->run( 'commit', '-m', 'test commit' );
 
 my $output = $repo->run('log');
 
 like( $output, qr/Initial commit/, 'Correct initial commit' );
 like( $output, qr/test commit/   , 'Correct test commit'    );
+
