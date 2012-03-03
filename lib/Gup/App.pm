@@ -17,15 +17,17 @@ has gup => (
     writer => 'set_gup',
 );
 
-sub parse_args {
+sub run {
     my $self = shift;
     my %opts = ();
 
     GetOptions(
+        # create new repo options
         'm|method=s'      => \$opts{'method'},
         'r|reposdir=s'    => \$opts{'repos_dir'},
         'c|config=s'      => \$opts{'configfile'},
 
+        # rsync options
         'd|dir=s'         => \$opts{'dir'},
         'h|host=s'        => \$opts{'host'},
         'u|user=s'        => \$opts{'user'},
@@ -53,11 +55,6 @@ sub parse_args {
     $self->set_gup( Gup->new(%opts) );
 
     exit $self->$method(%opts);
-}
-
-sub run {
-    my $self = shift;
-    $self->parse_args;
 }
 
 sub command_update {

@@ -8,4 +8,4 @@ use Gup::App;
 my $gup_app = Gup::App->new( name => 'test' );
 
 isa_ok( $gup_app, 'Gup::App' );
-can_ok( $gup_app, qw/parse_args run command_new/ ); 
+can_ok( $gup_app, qw/run command_new command_update/ ); 
