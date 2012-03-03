@@ -3,6 +3,7 @@ use warnings;
 package Gup::Role::Syncer;
 # ABSTRACT: Syncing role for Gup
 
+use English '-no_match_vars';
 use Moo::Role;
 use Sub::Quote;
 
@@ -25,17 +26,10 @@ has username => (
     isa      => quote_sub( q{
         $_[0] =~ /^(?:[A-Za-z0-9_-]|\.)*$/ or die "Improper user: '$_[0]'\n";
     } ),
-    required => 1,
+    builder  => '_build_username',
 );
 
-has password => (
-    is       => 'ro',
-    isa      => quote_sub( q{
-        chomp $_[0];
-        length $_[0] > 0 or die "Improper password: '$_[0]'\n";
-    } ),
-    required => 1,
-);
+sub _build_username { getpwuid $REAL_USER_ID }
 
 1;
 
