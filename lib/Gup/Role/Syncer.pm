@@ -4,6 +4,7 @@ package Gup::Role::Syncer;
 # ABSTRACT: Syncing role for Gup
 
 use Moo::Role;
+use Sub::Quote;
 
 requires 'sync';
 
