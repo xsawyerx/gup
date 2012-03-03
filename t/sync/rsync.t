@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More  tests => 14;
+use Test::More  tests => 13;
 use Test::Fatal 'exception';
 use Test::File; # dir_exists, etc.
 use t::lib::Functions; # create_test_{dir,file}
@@ -11,15 +11,9 @@ use t::lib::Functions; # create_test_{dir,file}
 use File::Basename;
 use Gup::Sync::Rsync;
 
-like(
-    exception { Gup::Sync::Rsync->new },
-    qr/^\QMissing required arguments: host\E/,
-    'Must have a host attribute',
-);
-
 my $rsync;
 is(
-    exception { $rsync = Gup::Sync::Rsync->new( host => 'localhost' ) },
+    exception { $rsync = Gup::Sync::Rsync->new },
     undef,
     'Can create sync with host',
 );

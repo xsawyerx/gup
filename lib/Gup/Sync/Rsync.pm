@@ -23,15 +23,9 @@ sub sync {
         or croak "sync( FROM, TO )";
     my $host = $self->host;
     my $user = $self->username;
+    my $path = $host ? "$user\@$host:$from/" : "$from/";
 
-    my $cmd = System::Command->new(
-        'rsync',
-        $self->args,
-        "$user\@$host:$from/",
-        $to,
-    );
-
-    # finish
+    my $cmd  = System::Command->new( 'rsync', $self->args, $path, $to );
     $cmd->close;
 
     # return 1 for good, undef for rest
