@@ -45,19 +45,19 @@ has repo => (
     predicate => 'has_repo',
 );
 
-has _sync => ( is => 'rw' );
+has _syncer => ( is => 'rw' );
 
-# lazy build for sync
-sub sync {
-    my $self = shift;
-    
-    if( not defined $self->_sync ) {
-        my $package = 'Gup::Sync::'.ucfirst($self->method);
+# lazy build for syncer
+sub syncer {
+    my $self    = shift;
+    my $package = 'Gup::Sync::'.ucfirst($self->method);
+
+    if( not defined $self->_syncer || ref $self->_syncer ne $package ) {
         eval "use $package;" and $@ and die "Can't load $package $@";
-        $self->_sync( $package->new_from_configfile( $self ) );
+        $self->_syncer( $package->new_from_configfile( $self ) );
     }
 
-    return $self->_sync;
+    return $self->_syncer;
 }
 
 sub repo_dir {
@@ -90,6 +90,16 @@ sub create_repo {
     return $repo;
 }
 
+sub update_repo {
+    my $self = shift;
+
+    # Sync repo before
+    defined $self->sync_repo( @_ ) or croak 'There was error on sync repo';
+    
+    # Commit updates
+    return $self->commit_updates( @_ );
+}
+
 sub commit_updates {
     my $self = shift;
 
@@ -109,24 +119,19 @@ sub commit_updates {
     return $self->repo->run( 'commit', '-a', '-m', $message );
 }
 
-sub update_repo {
+sub sync_repo {
     my $self     = shift;
+
+    @_ % 2 == 0 or croak 'sync_repo() gets a hash as parameter';
+
+    my %opts     = @_;
     my $repo_dir = $self->repo_dir;
-    my $date     = strftime "%Y%m%d - %H:%M", localtime;
+    my $sync_dir = $opts{sync_from};
 
     chdir $repo_dir or die "Can't chdir to $repo_dir: $!\n";
 
     # sync directory
-    # TODO: user syncer object and call sync() method on it
-    $self->sync->sync_dir;
-    
-    my $repo = Git::Repository->new( work_tree => '.' );
-
-    # Try to add new files
-    $repo->run( 'add', '-A' );
-
-    # commit update
-    return $repo->run( 'commit', '-a', '-m', "Update $date" );
+    return $self->syncer->sync( $sync_dir , $repo_dir );
 }
 
 1;
