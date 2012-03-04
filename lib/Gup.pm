@@ -4,7 +4,7 @@ package Gup;
 
 use Moo;
 use Carp;
-use YAML::Tiny;
+use Try::Tiny;
 use Sub::Quote;
 use Git::Repository;
 use System::Command;
@@ -20,9 +20,9 @@ has name => (
     required => 1,
 );
 
-has method => (
+has sync_class => (
     is      => 'ro',
-    default => quote_sub(q{'rsync'}),
+    default => quote_sub(q{'Rsync'}),
 );
 
 has configfile => (
@@ -45,19 +45,34 @@ has repo => (
     predicate => 'has_repo',
 );
 
-has _sync => ( is => 'rw' );
+has syncer => (
+    is      => 'ro',
+    isa     => quote_sub( q{
+        ref( $_[0] ) and ref( $_[0] ) =~ /^\QGup::Sync::\E/
+            or die 'Must be a Gup::Sync:: object'
+    } ),
+    lazy    => 1,
+    builder => '_build_syncer',
+);
 
-# lazy build for sync
-sub sync {
-    my $self = shift;
-    
-    if( not defined $self->_sync ) {
-        my $package = 'Gup::Sync::'.ucfirst($self->method);
-        eval "use $package;" and $@ and die "Can't load $package $@";
-        $self->_sync( $package->new_from_configfile( $self ) );
+sub _build_syncer {
+    my $self  = shift;
+    my $class = 'Gup::Sync::' . $self->sync_class;
+
+    {
+        local $@ = undef;
+        eval "use $class";
+        $@ and die "Can't load $class: $@\n";
     }
 
-    return $self->_sync;
+    return $class->new;
+}
+
+sub sync {
+    my $self          = shift;
+    my ( $from, $to ) = @_;
+
+    return $self->syncer->sync( $from, $to );
 }
 
 sub repo_dir {
