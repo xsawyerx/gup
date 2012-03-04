@@ -4,7 +4,30 @@ use strict;
 use warnings;
 
 use Gup;
-use Test::More tests => 4;
+use Test::More tests => 6;
+use Test::Fatal;
+
+{
+    package A;
+    sub new { bless {}, shift }
+}
+
+{
+    package Gup::Sync::A;
+    sub new { bless {}, shift }
+}
+
+like(
+    exception { Gup->new( name => 'blah', syncer => A->new ) },
+    qr/^\QMust be a Gup::Sync:: object\E/,
+    'Cannot create gup with improper syncer object',
+);
+
+is(
+    exception { Gup->new( name => 'a', syncer => Gup::Sync::A->new ) },
+    undef,
+    'Can create new Gup with proper syncer',
+);
 
 my $gup = Gup->new( name => 'blah', sync_class => 'Rsync' );
 isa_ok( $gup, 'Gup' );
