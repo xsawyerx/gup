@@ -48,7 +48,7 @@ has repo => (
 has syncer => (
     is      => 'ro',
     isa     => quote_sub( q{
-        ref $_[0] and ref $_[0] =~ /^Gup::Sync::/
+        ref( $_[0] ) and ref( $_[0] ) =~ /^\QGup::Sync::\E/
             or die 'Must be a Gup::Sync:: object'
     } ),
     lazy    => 1,
