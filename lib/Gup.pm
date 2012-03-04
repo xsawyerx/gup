@@ -19,9 +19,9 @@ has name => (
     required => 1,
 );
 
-has method => (
+has sync_class => (
     is      => 'ro',
-    default => quote_sub(q{'rsync'}),
+    default => quote_sub(q{'Rsync'}),
 );
 
 has configfile => (
