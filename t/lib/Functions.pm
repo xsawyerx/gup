@@ -6,12 +6,15 @@ use File::Spec;
 use File::Temp;
 
 sub create_test_dir {
+    my $dir = shift;
+
     # create a directory
-    my $dir = File::Temp::tempdir(
-        $ENV{'GUP_KEEPDIR'} ? () : ( CLEANUP => 1 )
+    my $test_dir = File::Temp::tempdir(
+        DIR => $dir,
+        $ENV{'GUP_KEEPDIR'} ? () : ( CLEANUP => 1 ),
     );
 
-    return $dir;
+    return $test_dir;
 }
 
 sub create_test_file {
