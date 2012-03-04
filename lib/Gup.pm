@@ -4,7 +4,6 @@ package Gup;
 
 use Moo;
 use Carp;
-use YAML::Tiny;
 use Sub::Quote;
 use Git::Repository;
 use System::Command;
