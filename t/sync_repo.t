@@ -7,7 +7,6 @@ use Gup;
 use Test::More  tests => 16;
 use Test::Fatal 'exception';
 use Test::File;
-use Test::Dir;
 use t::lib::Functions;
 
 use File::Copy;
@@ -67,7 +66,10 @@ rmtree $sync_dir;
 $gup->sync_repo( sync_from => $sync_from_dir );
 
 file_not_exists_ok( $synced_file, 'File successfully deleted' );
-dir_not_exists_ok( $synced_dir, 'Dir successfully deleted' );
+ok(
+    ( ( ! -e $synced_dir ) && ( ! -d $synced_dir ) ),
+    'Dir successfully deleted',
+);
 file_not_exists_ok( $synced_file_2, 'File successfully deleted' );
 
 my $git_dir = File::Spec->catdir( $repo_dir, '.git' );
