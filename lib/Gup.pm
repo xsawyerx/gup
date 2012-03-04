@@ -45,19 +45,17 @@ has repo => (
     predicate => 'has_repo',
 );
 
-has _syncer => ( is => 'rw' );
+has syncer => ( 
+    is      => 'rw',
+    builder => '_build_syncer'
+);
 
-# lazy build for syncer
-sub syncer {
+# builder for syncer
+sub _build_syncer {
     my $self    = shift;
     my $package = 'Gup::Sync::'.ucfirst($self->method);
-
-    if( not defined $self->_syncer || ref $self->_syncer ne $package ) {
-        eval "use $package;" and $@ and die "Can't load $package $@";
-        $self->_syncer( $package->new_from_configfile( $self ) );
-    }
-
-    return $self->_syncer;
+    eval "use $package;" and $@ and die "Can't load $package $@";
+    return $package->new();
 }
 
 sub repo_dir {
