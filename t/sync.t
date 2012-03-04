@@ -6,25 +6,26 @@ use warnings;
 use Gup;
 use Test::More tests => 4;
 
-{
-    package Gup::Sync::Test;
+my $gup = Gup->new( name => 'blah', sync_class => 'Rsync' );
+isa_ok( $gup, 'Gup' );
 
-    sub new { bless {}, shift }
+$gup->_build_syncer;
+
+{
     my $count;
 
-    sub sync {
+    no warnings qw/redefine once/;
+    *Gup::Sync::Rsync::sync = sub {
         my $self = shift;
         my ( $from, $to ) = @_;
 
-        isa_ok( $self, 'Gup::Sync::Test' );
-        is( $from, 'from' );
-        is( $to,   'to'   );
+        isa_ok( $self, 'Gup::Sync::Rsync' );
+        is( $from, 'from', 'Correct from' );
+        is( $to,   'to',   'Correct to'   );
 
         return $count++;
-    }
+    };
 }
 
-my $gup = Gup->new( name => 'blah', sync_class => 'Test' );
-isa_ok( $gup, 'Gup' );
 $gup->sync( 'from', 'to' );
 
