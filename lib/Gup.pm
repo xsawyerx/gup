@@ -79,6 +79,9 @@ sub create_repo {
     Git::Repository->run( init => $repo_dir );
     my $repo = Git::Repository->new( work_tree => $repo_dir );
 
+    $repo->run( 'config', '--local', 'user.email', 'you@example.com' );
+    $repo->run( 'config', '--local', 'user.name', 'Your Name' );
+
     # create HEAD and first commit
     $repo->run( 'symbolic-ref', 'HEAD', 'refs/heads/master' );
     $repo->run( commit => '--allow-empty', '-m', 'Initial commit' );
