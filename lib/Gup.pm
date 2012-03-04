@@ -96,6 +96,9 @@ sub create_repo {
     Git::Repository->run( init => $repo_dir );
     my $repo = Git::Repository->new( work_tree => $repo_dir );
 
+    $repo->run( 'config', '--local', 'user.email', 'you@example.com' );
+    $repo->run( 'config', '--local', 'user.name', 'Your Name' );
+
     # create HEAD and first commit
     $repo->run( 'symbolic-ref', 'HEAD', 'refs/heads/master' );
     $repo->run( commit => '--allow-empty', '-m', 'Initial commit' );
@@ -103,6 +106,16 @@ sub create_repo {
     $self->set_repo($repo);
 
     return $repo;
+}
+
+sub update_repo {
+    my $self = shift;
+
+    # Sync repo before
+    defined $self->sync_repo( @_ ) or croak 'There was error on sync repo';
+    
+    # Commit updates
+    return $self->commit_updates( @_ );
 }
 
 sub commit_updates {
@@ -124,24 +137,19 @@ sub commit_updates {
     return $self->repo->run( 'commit', '-a', '-m', $message );
 }
 
-sub update_repo {
+sub sync_repo {
     my $self     = shift;
+
+    @_ % 2 == 0 or croak 'sync_repo() gets a hash as parameter';
+
+    my %opts     = @_;
     my $repo_dir = $self->repo_dir;
-    my $date     = strftime "%Y%m%d - %H:%M", localtime;
+    my $sync_dir = $opts{sync_from};
 
     chdir $repo_dir or die "Can't chdir to $repo_dir: $!\n";
 
     # sync directory
-    # TODO: user syncer object and call sync() method on it
-    $self->sync->sync_dir;
-    
-    my $repo = Git::Repository->new( work_tree => '.' );
-
-    # Try to add new files
-    $repo->run( 'add', '-A' );
-
-    # commit update
-    return $repo->run( 'commit', '-a', '-m', "Update $date" );
+    return $self->syncer->sync( $sync_dir , $repo_dir );
 }
 
 1;

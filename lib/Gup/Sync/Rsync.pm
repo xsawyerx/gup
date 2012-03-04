@@ -25,7 +25,15 @@ sub sync {
     my $user = $self->username;
     my $path = $host ? "$user\@$host:$from/" : "$from/";
 
-    my $cmd  = System::Command->new( 'rsync', $self->args, $path, $to );
+    my $cmd  = System::Command->new(
+        'rsync',
+        $self->args,
+        $path,
+        $to,
+        '--quiet',
+        '--delete',
+        '--exclude','.git',
+    );
     $cmd->close;
 
     # return 1 for good, undef for rest
