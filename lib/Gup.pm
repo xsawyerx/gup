@@ -45,6 +45,17 @@ has repo => (
     predicate => 'has_repo',
 );
 
+has repo_dir => (
+    is      => 'ro',
+    lazy    => 1,
+    builder => '_build_repo_dir',
+);
+
+sub _build_repo_dir {
+    my $self = shift;
+    return File::Spec->catdir( $self->repos_dir, $self->name );
+};
+
 has syncer => (
     is      => 'ro',
     isa     => quote_sub( q{
@@ -74,11 +85,6 @@ sub sync {
 
     return $self->syncer->sync( $from, $to );
 }
-
-sub repo_dir {
-    my $self = shift;
-    return File::Spec->catdir( $self->repos_dir, $self->name );
-};
 
 # TODO: allow to control the git user and email for this
 # creates a new repository
