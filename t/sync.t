@@ -44,12 +44,12 @@ $gup->_build_syncer;
         my ( $from, $to ) = @_;
 
         isa_ok( $self, 'Gup::Sync::Rsync' );
-        is( $from, 'from', 'Correct from' );
-        is( $to,   'to',   'Correct to'   );
+        is( $from, 'from',                'Correct from' );
+        is( $to,   '/var/gup/repos/blah', 'Correct to'   );
 
         return $count++;
     };
 }
 
-$gup->sync( 'from', 'to' );
+$gup->sync_repo('from');
 
