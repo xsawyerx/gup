@@ -88,7 +88,7 @@ sub _build_syncer {
     return $class->new( @{ $self->syncer_args } );
 }
 
-sub sync {
+sub sync_repo {
     my $self = shift;
     my $from = shift;
 
@@ -141,7 +141,7 @@ sub commit_updates {
     my %opts    = @_ ;
     my $message = defined $opts{'message'} ?
                   $opts{'message'}         :
-                  'Gup commit: ' . strftime "%Y%m%d - %H:%M", localtime;
+                  'Gup commit: ' . strftime "%Y/%m/%d - %H:%M", localtime;
 
     my $repo = $self->repo;
 
@@ -150,21 +150,6 @@ sub commit_updates {
 
     # commit update
     return $self->repo->run( 'commit', '-a', '-m', $message );
-}
-
-sub sync_repo {
-    my $self     = shift;
-
-    @_ % 2 == 0 or croak 'sync_repo() gets a hash as parameter';
-
-    my %opts     = @_;
-    my $repo_dir = $self->repo_dir;
-    my $sync_dir = $opts{sync_from};
-
-    chdir $repo_dir or die "Can't chdir to $repo_dir: $!\n";
-
-    # sync directory
-    return $self->syncer->sync( $sync_dir , $repo_dir );
 }
 
 1;
