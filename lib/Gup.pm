@@ -51,11 +51,6 @@ has repo_dir => (
     builder => '_build_repo_dir',
 );
 
-sub _build_repo_dir {
-    my $self = shift;
-    return File::Spec->catdir( $self->repos_dir, $self->name );
-};
-
 has syncer => (
     is      => 'ro',
     isa     => quote_sub( q{
@@ -65,6 +60,20 @@ has syncer => (
     lazy    => 1,
     builder => '_build_syncer',
 );
+
+has syncer_args => (
+    is      => 'ro',
+    isa     => quote_sub( q{
+        ref $_[0] and ref $_[0] eq 'ARRAY'
+            or die 'Must be arrayref'
+    } ),
+    default => quote_sub( q{[]} ),
+);
+
+sub _build_repo_dir {
+    my $self = shift;
+    return File::Spec->catdir( $self->repos_dir, $self->name );
+};
 
 sub _build_syncer {
     my $self  = shift;
@@ -76,14 +85,14 @@ sub _build_syncer {
         $@ and die "Can't load $class: $@\n";
     }
 
-    return $class->new;
+    return $class->new( @{ $self->syncer_args } );
 }
 
 sub sync {
-    my $self          = shift;
-    my ( $from, $to ) = @_;
+    my $self = shift;
+    my $from = shift;
 
-    return $self->syncer->sync( $from, $to );
+    return $self->syncer->sync( $from, $self->repo_dir );
 }
 
 # TODO: allow to control the git user and email for this
