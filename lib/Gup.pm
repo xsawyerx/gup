@@ -89,10 +89,10 @@ sub _build_syncer {
 }
 
 sub sync {
-    my $self          = shift;
-    my ( $from, $to ) = @_;
+    my $self = shift;
+    my $from = shift;
 
-    return $self->syncer->sync( $from, $to );
+    return $self->syncer->sync( $from, $self->repo_dir );
 }
 
 # TODO: allow to control the git user and email for this
