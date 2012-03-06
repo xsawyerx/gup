@@ -141,7 +141,7 @@ sub commit_updates {
     my %opts    = @_ ;
     my $message = defined $opts{'message'} ?
                   $opts{'message'}         :
-                  'Gup commit: ' . strftime "%Y%m%d - %H:%M", localtime;
+                  'Gup commit: ' . strftime "%Y/%m/%d - %H:%M", localtime;
 
     my $repo = $self->repo;
 
