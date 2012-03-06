@@ -32,6 +32,7 @@ is(
 my $gup = Gup->new( name => 'blah', sync_class => 'Rsync' );
 isa_ok( $gup, 'Gup' );
 
+# call the builder so it loads the namespaces so that we could override it
 $gup->_build_syncer;
 
 {
