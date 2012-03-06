@@ -1,0 +1,15 @@
+* Finish Gup::App, basic without arguments
+* Add argument parsing
+* Add configuration file
+
+* Change default commit message to say who the user who ran Gup is.
+  (Git already marks the time on the commit, so it might not be necessary)
+* Allow types of messages? Perhaps a template with variables?
+* Allow adding a report file (gup-report.txt).
+* Allow non-changes commits? ("Gup commit. (no change)"), implies report
+* Run through cron/internal daemon/ubic daemon.
+* Write more sync methods (HTTP,FTP,...)
+* Add hooks!
+* Allow auto-pushing to additional remotes
+
+
