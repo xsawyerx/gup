@@ -91,7 +91,7 @@ sub _build_syncer {
     {
         local $@ = undef;
         eval "use $class";
-        $@ and die "Can't load $class: $@\n";
+        $@ and croak "Can't load $class: $@";
     }
 
     return $class->new( @{ $self->syncer_args } );
@@ -100,7 +100,7 @@ sub _build_syncer {
 sub sync_repo {
     my $self = shift;
 
-    $self->has_source_dir or die "Must provide a source_dir\n";
+    $self->has_source_dir or croak 'Must provide a source_dir';
 
     return $self->syncer->sync( $self->source_dir, $self->repo_dir );
 }
@@ -137,7 +137,7 @@ sub update_repo {
     my $self = shift;
 
     # Sync repo before
-    defined $self->sync_repo( @_ ) or croak 'There was error on sync repo';
+    $self->sync_repo or croak 'sync_repo failed';
     
     # Commit updates
     return $self->commit_updates( @_ );
