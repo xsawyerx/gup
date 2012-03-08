@@ -39,7 +39,7 @@ has repo => (
     is        => 'ro',
     isa       => quote_sub( q{
         ref $_[0] and ref $_[0] eq 'Git::Repository'
-            or die 'Repo must be a Git::Repository object'
+            or die 'repo must be a Git::Repository object'
     } ),
     writer    => 'set_repo',
     predicate => 'has_repo',
@@ -55,7 +55,7 @@ has syncer => (
     is      => 'ro',
     isa     => quote_sub( q{
         ref( $_[0] ) and ref( $_[0] ) =~ /^\QGup::Sync::\E/
-            or die 'Must be a Gup::Sync:: object'
+            or die 'syncer must be a Gup::Sync:: object'
     } ),
     lazy    => 1,
     builder => '_build_syncer',
@@ -65,9 +65,18 @@ has syncer_args => (
     is      => 'ro',
     isa     => quote_sub( q{
         ref $_[0] and ref $_[0] eq 'ARRAY'
-            or die 'Must be arrayref'
+            or die 'syncer_args must be an arrayref'
     } ),
     default => quote_sub( q{[]} ),
+);
+
+has source_dir => (
+    is       => 'ro',
+    isa      => quote_sub( q{
+        defined $_[0] and length $_[0] > 0
+            or die 'source_dir must be provided';
+    } ),
+    required => 1,
 );
 
 sub _build_repo_dir {
@@ -90,9 +99,8 @@ sub _build_syncer {
 
 sub sync_repo {
     my $self = shift;
-    my $from = shift;
 
-    return $self->syncer->sync( $from, $self->repo_dir );
+    return $self->syncer->sync( $self->source_dir, $self->repo_dir );
 }
 
 # TODO: allow to control the git user and email for this
