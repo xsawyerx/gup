@@ -19,7 +19,7 @@ use Test::Fatal;
 
 like(
     exception { Gup->new( name => 'blah', syncer => A->new ) },
-    qr/^\QMust be a Gup::Sync:: object\E/,
+    qr/^\Qsyncer must be a Gup::Sync:: object\E/,
     'Cannot create gup with improper syncer object',
 );
 
@@ -29,7 +29,12 @@ is(
     'Can create new Gup with proper syncer',
 );
 
-my $gup = Gup->new( name => 'blah', sync_class => 'Rsync' );
+my $gup = Gup->new(
+    name       => 'blah',
+    sync_class => 'Rsync',
+    source_dir => 'from',
+);
+
 isa_ok( $gup, 'Gup' );
 
 # call the builder so it loads the namespaces so that we could override it
@@ -51,5 +56,5 @@ $gup->_build_syncer;
     };
 }
 
-$gup->sync_repo('from');
+$gup->sync_repo();
 
