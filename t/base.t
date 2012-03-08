@@ -7,8 +7,9 @@ use Gup;
 use Test::More tests => 2;
 use Test::Fatal;
 
-ok(
+like(
     exception { Gup->new },
+    qr/^Missing required arguments: name/,
     'Gup->new requires a name',
 );
 

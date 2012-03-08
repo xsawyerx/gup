@@ -39,7 +39,7 @@ has repo => (
     is        => 'ro',
     isa       => quote_sub( q{
         ref $_[0] and ref $_[0] eq 'Git::Repository'
-            or die 'Repo must be a Git::Repository object'
+            or die 'repo must be a Git::Repository object'
     } ),
     writer    => 'set_repo',
     predicate => 'has_repo',
@@ -55,7 +55,7 @@ has syncer => (
     is      => 'ro',
     isa     => quote_sub( q{
         ref( $_[0] ) and ref( $_[0] ) =~ /^\QGup::Sync::\E/
-            or die 'Must be a Gup::Sync:: object'
+            or die 'syncer must be a Gup::Sync:: object'
     } ),
     lazy    => 1,
     builder => '_build_syncer',
@@ -65,9 +65,18 @@ has syncer_args => (
     is      => 'ro',
     isa     => quote_sub( q{
         ref $_[0] and ref $_[0] eq 'ARRAY'
-            or die 'Must be arrayref'
+            or die 'syncer_args must be an arrayref'
     } ),
     default => quote_sub( q{[]} ),
+);
+
+has source_dir => (
+    is        => 'ro',
+    isa       => quote_sub( q{
+        defined $_[0] and length $_[0] > 0
+            or die 'source_dir must be provided';
+    } ),
+    predicate => 'has_source_dir',
 );
 
 sub _build_repo_dir {
@@ -82,7 +91,7 @@ sub _build_syncer {
     {
         local $@ = undef;
         eval "use $class";
-        $@ and die "Can't load $class: $@\n";
+        $@ and croak "Can't load $class: $@";
     }
 
     return $class->new( @{ $self->syncer_args } );
@@ -90,9 +99,10 @@ sub _build_syncer {
 
 sub sync_repo {
     my $self = shift;
-    my $from = shift;
 
-    return $self->syncer->sync( $from, $self->repo_dir );
+    $self->has_source_dir or croak 'Must provide a source_dir';
+
+    return $self->syncer->sync( $self->source_dir, $self->repo_dir );
 }
 
 # TODO: allow to control the git user and email for this
@@ -127,10 +137,10 @@ sub update_repo {
     my $self = shift;
 
     # Sync repo before
-    defined $self->sync_repo( @_ ) or croak 'There was error on sync repo';
+    $self->sync_repo or croak 'sync_repo failed';
     
     # Commit updates
-    return $self->commit_updates( @_ );
+    return $self->commit_updates(@_);
 }
 
 sub commit_updates {
