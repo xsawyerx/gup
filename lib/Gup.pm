@@ -71,12 +71,12 @@ has syncer_args => (
 );
 
 has source_dir => (
-    is       => 'ro',
-    isa      => quote_sub( q{
+    is        => 'ro',
+    isa       => quote_sub( q{
         defined $_[0] and length $_[0] > 0
             or die 'source_dir must be provided';
     } ),
-    required => 1,
+    predicate => 'has_source_dir',
 );
 
 sub _build_repo_dir {
@@ -99,6 +99,8 @@ sub _build_syncer {
 
 sub sync_repo {
     my $self = shift;
+
+    $self->has_source_dir or die "Must provide a source_dir\n";
 
     return $self->syncer->sync( $self->source_dir, $self->repo_dir );
 }
