@@ -140,7 +140,7 @@ sub update_repo {
     $self->sync_repo or croak 'sync_repo failed';
     
     # Commit updates
-    return $self->commit_updates( @_ );
+    return $self->commit_updates(@_);
 }
 
 sub commit_updates {
