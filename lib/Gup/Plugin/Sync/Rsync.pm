@@ -1,14 +1,16 @@
 use strict;
 use warnings;
-package Gup::Sync::Rsync;
-# ABSTRACT: Rsync sync method for Gup
+package Gup::Plugin::Sync::Rsync;
+# ABSTRACT: Rsync sync plugin for Gup
 
 use Moo;
 use Carp;
 use Sub::Quote;
 use System::Command;
 
-with 'Gup::Role::Syncer';
+# requires us to add sync() method which will be run
+# XXX: for now provides username and host, which should be integrated here
+with 'Gup::Role::Sync';
 
 has args => (
     is      => 'ro',
@@ -16,11 +18,15 @@ has args => (
 );
 
 sub sync {
-    my $self          = shift;
+    my $self = shift;
+    my $gup  = $self->gup;
+
     my ( $from, $to ) = @_;
 
+    # TODO: move this into the Sync role and remove form here
     length $from && length $to
         or croak "sync( FROM, TO )";
+
     my $host = $self->host;
     my $user = $self->username;
     my $path = $host ? "$user\@$host:$from/" : "$from/";
