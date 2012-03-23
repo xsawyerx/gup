@@ -9,6 +9,8 @@ use Sub::Quote;
 
 requires 'sync';
 
+with 'Gup::Role::Plugin';
+
 has host => (
     is       => 'ro',
     isa      => quote_sub( q{
