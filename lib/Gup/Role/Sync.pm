@@ -1,7 +1,7 @@
 use strict;
 use warnings;
-package Gup::Role::Syncer;
-# ABSTRACT: Syncing role for Gup
+package Gup::Role::Sync;
+# ABSTRACT: Sync role for Gup
 
 use English '-no_match_vars';
 use Moo::Role;
