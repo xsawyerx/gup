@@ -106,6 +106,14 @@ sub _build_syncer {
     return $class->new( @{ $self->syncer_args } );
 }
 
+sub BUILD {
+    my $self = shift;
+
+    foreach my $plugin ( @{ $self->plugins } ) {
+        eval "use $plugin";
+    }
+}
+
 sub sync_repo {
     my $self = shift;
 
