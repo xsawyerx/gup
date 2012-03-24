@@ -123,7 +123,8 @@ sub sync_repo {
     # then run it
     # TODO: add BeforeSync, AfterSync
     foreach my $plugin ( $self->find_plugins('-Sync' ) ) {
-        $plugin->sync( $self->source_dir, $self->repo_dir );
+        $plugin->new( gup => $self )
+               ->sync( $self->source_dir, $self->repo_dir );
     }
 }
 
