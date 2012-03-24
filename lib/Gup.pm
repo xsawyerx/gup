@@ -15,7 +15,7 @@ use POSIX qw(strftime);
 has name => (
     is       => 'ro',
     isa      => quote_sub( q{
-      $_[0] =~ /^(?:[A-Za-z0-9_-]|\.)+$/ or die "Improper repo name: '$_[0]'\n";
+      $_[0] =~ /^(?:[A-Za-z0-9_-]|\.)+$/ or die "Improper repo name: '$_[0]'\n"
     } ),
     required => 1,
 );
@@ -83,9 +83,9 @@ has plugins => (
     is      => 'ro',
     isa     => quote_sub( q{
         ref $_[0] and ref $_[0] eq 'ARRAY'
-            or die "plugins must be an arrayref'
+            or die 'plugins must be an arrayref'
     } ),
-    default => sub { [] },
+    default => quote_sub( q{[]} ),
 );
 
 sub _build_repo_dir {
