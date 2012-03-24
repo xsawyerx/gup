@@ -15,7 +15,7 @@ use POSIX qw(strftime);
 has name => (
     is       => 'ro',
     isa      => quote_sub( q{
-        $_[0] =~ /^(?:[A-Za-z0-9_-]|\.)+$/ or die "Improper repo name: '$_[0]'\n";
+      $_[0] =~ /^(?:[A-Za-z0-9_-]|\.)+$/ or die "Improper repo name: '$_[0]'\n";
     } ),
     required => 1,
 );
@@ -74,9 +74,17 @@ has source_dir => (
     is        => 'ro',
     isa       => quote_sub( q{
         defined $_[0] and length $_[0] > 0
-            or die 'source_dir must be provided';
+            or die 'source_dir must be provided'
     } ),
     predicate => 'has_source_dir',
+);
+
+has plugins => (
+    is  => 'ro',
+    isa => quote_sub( q{
+        ref $_[0] and ref $_[0] eq 'ARRAY'
+            or die "plugins must be an arrayref'
+    } ),
 );
 
 sub _build_repo_dir {
