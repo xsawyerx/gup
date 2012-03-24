@@ -114,7 +114,7 @@ sub sync_repo {
     # find all plugins that use a role Sync
     # then run it
     # TODO: add BeforeSync, AfterSync
-    foreach my $plugin ( $self->find_plugins('-Sync' ) {
+    foreach my $plugin ( $self->find_plugins('-Sync' ) ) {
         $plugin->sync( $self->source_dir, $self->repo_dir );
     }
 }
