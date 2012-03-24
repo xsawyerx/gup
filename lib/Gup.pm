@@ -80,11 +80,12 @@ has source_dir => (
 );
 
 has plugins => (
-    is  => 'ro',
-    isa => quote_sub( q{
+    is      => 'ro',
+    isa     => quote_sub( q{
         ref $_[0] and ref $_[0] eq 'ARRAY'
             or die "plugins must be an arrayref'
     } ),
+    default => sub { [] },
 );
 
 sub _build_repo_dir {
@@ -110,7 +111,21 @@ sub sync_repo {
 
     $self->has_source_dir or croak 'Must provide a source_dir';
 
-    return $self->syncer->sync( $self->source_dir, $self->repo_dir );
+    # find all plugins that use a role Sync
+    # then run it
+    # TODO: add BeforeSync, AfterSync
+    foreach my $plugin ( $self->find_plugins('-Sync' ) {
+        $plugin->sync( $self->source_dir, $self->repo_dir );
+    }
+}
+
+sub find_plugins {
+    my $self = shift;
+    my $role = shift;
+
+    $role =~ s/^-/Gup::Role::/;
+
+    return grep { $_->does($role) } @{ $self->plugins };
 }
 
 # TODO: allow to control the git user and email for this
