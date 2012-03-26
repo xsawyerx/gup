@@ -3,8 +3,10 @@ use warnings;
 package Gup;
 
 use Moo;
-use Carp;
 use Sub::Quote;
+use MooX::Types::MooseLike::Base qw/Str HashRef ArrayRef/;
+
+use Carp;
 use Git::Repository;
 
 use File::Path qw(mkpath);
@@ -20,16 +22,19 @@ has name => (
 
 has configfile => (
     is      => 'ro',
+    isa     => Str,
     default => quote_sub(q{'/etc/gup/gup.yaml'}),
 );
 
 has repos_dir => (
     is      => 'ro',
+    isa     => Str,
     default => quote_sub(q{'/var/gup/repos'}),
 );
 
 has repo => (
     is        => 'ro',
+    isa       => Str,
     isa       => quote_sub( q{
         ref $_[0] and ref $_[0] eq 'Git::Repository'
             or die 'repo must be a Git::Repository object'
@@ -40,43 +45,33 @@ has repo => (
 
 has repo_dir => (
     is      => 'ro',
+    isa     => Str,
     lazy    => 1,
     builder => '_build_repo_dir',
 );
 
 has source_dir => (
     is        => 'ro',
-    isa       => quote_sub( q{
-        defined $_[0] and length $_[0] > 0
-            or die 'source_dir must be provided'
-    } ),
+    isa       => Str,
+    required  => 1,
     predicate => 'has_source_dir',
 );
 
 has plugins => (
     is      => 'ro',
-    isa     => quote_sub( q{
-        ref $_[0] and ref $_[0] eq 'ARRAY'
-            or die 'plugins must be an arrayref'
-    } ),
+    isa     => ArrayRef,
     default => quote_sub( q{[]} ),
 );
 
 has plugin_args => (
     is      => 'ro',
-    isa     => quote_sub( q{
-        ref $_[0] and ref $_[0] eq 'HASH'
-            or die 'plugin_args must be an arrayref'
-    } ),
+    isa     => HashRef,
     default => quote_sub( q({}) ),
 );
 
 has plugin_objs => (
     is      => 'ro',
-    isa     => quote_sub( q{
-        ref $_[0] and ref $_[0] eq 'ARRAY'
-            or die 'plugin_args must be an arrayref'
-    } ),
+    isa     => ArrayRef,
     lazy    => 1,
     builder => '_build_plugin_objs',
 );
