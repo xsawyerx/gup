@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Gup;
-use Test::More tests => 2;
+use Test::More tests => 3;
 
 my $gup = Gup->new(
     name    => 'blah',
@@ -15,8 +15,6 @@ isa_ok( $gup, 'Gup' );
 
 my @plugins = $gup->find_plugins('-Sync');
 
-is_deeply(
-    \@plugins,
-    ['Sync::Rsync'],
-    'find_plugins works',
-);
+cmp_ok( @plugins, '==', 1, 'Found one plugin' );
+isa_ok( $plugins[0], 'Gup::Plugin::Sync::Rsync' );
+
