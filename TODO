@@ -1,3 +1,8 @@
+* Add arguments to plugins + tests
+* Add BeforeSync, AfterSync
+* Add BeforeCreateRepo, AfterCreateRepo, BeforeUpdateRepo, AfterUpdateRepo
+* Add BeforeCommitUpdated, AfterCommitUpdates
+
 * Finish Gup::App, basic without arguments
 * Add argument parsing
 * Add configuration file
