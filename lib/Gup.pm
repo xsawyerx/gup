@@ -110,6 +110,15 @@ sub _build_plugin_objs {
     return \@plugins;
 }
 
+sub find_plugins {
+    my $self = shift;
+    my $role = shift;
+
+    $role =~ s/^-/Gup::Role::/;
+
+    return grep { $_->does($role) } @{ $self->plugin_objs };
+}
+
 sub sync_repo {
     my $self = shift;
 
@@ -121,15 +130,6 @@ sub sync_repo {
     foreach my $plugin ( $self->find_plugins('-Sync' ) ) {
         $plugin->sync( $self->source_dir, $self->repo_dir );
     }
-}
-
-sub find_plugins {
-    my $self = shift;
-    my $role = shift;
-
-    $role =~ s/^-/Gup::Role::/;
-
-    return grep { $_->does($role) } @{ $self->plugin_objs };
 }
 
 # TODO: allow to control the git user and email for this
