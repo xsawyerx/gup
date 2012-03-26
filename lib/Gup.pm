@@ -71,7 +71,7 @@ sub BUILD {
     my $self = shift;
 
     foreach my $plugin ( @{ $self->plugins } ) {
-        eval "use $plugin";
+        eval "use Gup::Plugin::$plugin";
     }
 }
 
@@ -95,7 +95,7 @@ sub find_plugins {
 
     $role =~ s/^-/Gup::Role::/;
 
-    return grep { $_->does($role) } @{ $self->plugins };
+    return grep { "Gup::Plugin::$_"->does($role) } @{ $self->plugins };
 }
 
 # TODO: allow to control the git user and email for this
