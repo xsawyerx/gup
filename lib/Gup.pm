@@ -4,10 +4,8 @@ package Gup;
 
 use Moo;
 use Carp;
-use Try::Tiny;
 use Sub::Quote;
 use Git::Repository;
-use System::Command;
 
 use File::Path qw(mkpath);
 use POSIX qw(strftime);
@@ -18,11 +16,6 @@ has name => (
       $_[0] =~ /^(?:[A-Za-z0-9_-]|\.)+$/ or die "Improper repo name: '$_[0]'\n"
     } ),
     required => 1,
-);
-
-has sync_class => (
-    is      => 'ro',
-    default => quote_sub(q{'Rsync'}),
 );
 
 has configfile => (
@@ -51,25 +44,6 @@ has repo_dir => (
     builder => '_build_repo_dir',
 );
 
-has syncer => (
-    is      => 'ro',
-    isa     => quote_sub( q{
-        ref( $_[0] ) and ref( $_[0] ) =~ /^\QGup::Sync::\E/
-            or die 'syncer must be a Gup::Sync:: object'
-    } ),
-    lazy    => 1,
-    builder => '_build_syncer',
-);
-
-has syncer_args => (
-    is      => 'ro',
-    isa     => quote_sub( q{
-        ref $_[0] and ref $_[0] eq 'ARRAY'
-            or die 'syncer_args must be an arrayref'
-    } ),
-    default => quote_sub( q{[]} ),
-);
-
 has source_dir => (
     is        => 'ro',
     isa       => quote_sub( q{
@@ -92,19 +66,6 @@ sub _build_repo_dir {
     my $self = shift;
     return File::Spec->catdir( $self->repos_dir, $self->name );
 };
-
-sub _build_syncer {
-    my $self  = shift;
-    my $class = 'Gup::Sync::' . $self->sync_class;
-
-    {
-        local $@ = undef;
-        eval "use $class";
-        $@ and croak "Can't load $class: $@";
-    }
-
-    return $class->new( @{ $self->syncer_args } );
-}
 
 sub BUILD {
     my $self = shift;
