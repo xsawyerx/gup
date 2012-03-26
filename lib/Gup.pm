@@ -62,6 +62,15 @@ has plugins => (
     default => quote_sub( q{[]} ),
 );
 
+has plugin_args => (
+    is      => 'ro',
+    isa     => quote_sub( q{
+        ref $_[0] and ref $_[0] eq 'ARRAY'
+            or die 'plugin_args must be an arrayref'
+    } ),
+    default => quote_sub( q{[]} ),
+);
+
 sub _build_repo_dir {
     my $self = shift;
     return File::Spec->catdir( $self->repos_dir, $self->name );
@@ -85,8 +94,10 @@ sub sync_repo {
     # TODO: add BeforeSync, AfterSync
     foreach my $plugin ( $self->find_plugins('-Sync' ) ) {
         my $class = "Gup::Plugin::$plugin";
-        $class->new( gup => $self )
-              ->sync( $self->source_dir, $self->repo_dir );
+        $class->new(
+            gup => $self,
+            $self->plugin_args->{$plugin}, # additional args
+        )->sync( $self->source_dir, $self->repo_dir );
     }
 }
 
