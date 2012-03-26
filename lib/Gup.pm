@@ -65,10 +65,20 @@ has plugins => (
 has plugin_args => (
     is      => 'ro',
     isa     => quote_sub( q{
+        ref $_[0] and ref $_[0] eq 'HASH'
+            or die 'plugin_args must be an arrayref'
+    } ),
+    default => quote_sub( q({}) ),
+);
+
+has plugin_objs => (
+    is      => 'ro',
+    isa     => quote_sub( q{
         ref $_[0] and ref $_[0] eq 'ARRAY'
             or die 'plugin_args must be an arrayref'
     } ),
-    default => quote_sub( q{[]} ),
+    lazy    => 1,
+    builder => '_build_plugin_objs',
 );
 
 sub _build_repo_dir {
@@ -76,12 +86,28 @@ sub _build_repo_dir {
     return File::Spec->catdir( $self->repos_dir, $self->name );
 };
 
-sub BUILD {
-    my $self = shift;
+sub _build_plugin_objs {
+    my $self    = shift;
+    my @plugins = ();
 
     foreach my $plugin ( @{ $self->plugins } ) {
-        eval "use Gup::Plugin::$plugin";
+        my $class = "Gup::Plugin::$plugin";
+
+        local $@ = undef;
+        eval "use $class";
+        $@ and die "Failed loading plugin $class: $@\n";
+
+        my @args =    $self->plugin_args->{$plugin}   ?
+                   @{ $self->plugin_args->{$plugin} } :
+                   ();
+
+        push @plugins, $class->new(
+            gup => $self,
+            @args,
+        );
     }
+
+    return \@plugins;
 }
 
 sub sync_repo {
@@ -93,11 +119,7 @@ sub sync_repo {
     # then run it
     # TODO: add BeforeSync, AfterSync
     foreach my $plugin ( $self->find_plugins('-Sync' ) ) {
-        my $class = "Gup::Plugin::$plugin";
-        $class->new(
-            gup => $self,
-            $self->plugin_args->{$plugin}, # additional args
-        )->sync( $self->source_dir, $self->repo_dir );
+        $plugin->sync( $self->source_dir, $self->repo_dir );
     }
 }
 
@@ -107,7 +129,7 @@ sub find_plugins {
 
     $role =~ s/^-/Gup::Role::/;
 
-    return grep { "Gup::Plugin::$_"->does($role) } @{ $self->plugins };
+    return grep { $_->does($role) } @{ $self->plugin_objs };
 }
 
 # TODO: allow to control the git user and email for this
