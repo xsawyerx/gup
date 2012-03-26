@@ -84,8 +84,9 @@ sub sync_repo {
     # then run it
     # TODO: add BeforeSync, AfterSync
     foreach my $plugin ( $self->find_plugins('-Sync' ) ) {
-        $plugin->new( gup => $self )
-               ->sync( $self->source_dir, $self->repo_dir );
+        my $class = "Gup::Plugin::$plugin";
+        $class->new( gup => $self )
+              ->sync( $self->source_dir, $self->repo_dir );
     }
 }
 
