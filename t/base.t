@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Gup;
-use Test::More tests => 2;
+use Test::More tests => 3;
 use Test::Fatal;
 
 like(
@@ -13,9 +13,14 @@ like(
     'Gup->new requires a name',
 );
 
-is(
+like(
     exception { Gup->new( name => 'test' ) },
-    undef,
+    qr/^Missing required arguments: source_dir/,
     'Gup->new with name works',
 );
 
+is(
+    exception { Gup->new( name => 'test', source_dir => 'test' ) },
+    undef,
+    'Gup->new with name works',
+);
