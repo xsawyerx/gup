@@ -6,7 +6,7 @@ use Moo;
 use Sub::Quote;
 
 use Gup;
-use Gup::Sync::Rsync;
+use Gup::Plugin::Sync::Rsync;
 use Getopt::Long qw/:config no_ignore_case/;
 
 has gup => (
