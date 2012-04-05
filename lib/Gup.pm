@@ -53,7 +53,6 @@ has repo_dir => (
 has source_dir => (
     is        => 'ro',
     isa       => Str,
-    required  => 1,
     predicate => 'has_source_dir',
 );
 
@@ -119,12 +118,17 @@ sub sync_repo {
 
     $self->has_source_dir or croak 'Must provide a source_dir';
 
+    # Run method before_sync on all plunigs with BeforeSync role
+    $_->before_sync() foreach ( $self->find_plugins('-BeforeSync' ) );
+
     # find all plugins that use a role Sync
     # then run it
-    # TODO: add BeforeSync, AfterSync
     foreach my $plugin ( $self->find_plugins('-Sync' ) ) {
         $plugin->sync( $self->source_dir, $self->repo_dir );
     }
+
+    # Run method before_sync on all plunigs with AfterSync role
+    $_->after_sync() foreach ( $self->find_plugins('-AfterSync' ) );
 }
 
 # TODO: allow to control the git user and email for this
