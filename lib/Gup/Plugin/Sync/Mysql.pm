@@ -6,8 +6,8 @@ package Gup::Plugin::Sync::Mysql;
 use Moo;
 use Carp;
 use Sub::Quote;
-use System::Command;
 use MooX::Types::MooseLike::Base qw/Str/;
+use Sys::Cmd qw( spawn );
 
 with 'Gup::Role::Sync';
 with 'Gup::Role::BeforeSync';
@@ -81,12 +81,19 @@ sub before_sync {
     my $databases = $self->has_mysqldump_databases ?
                     '--databases '.$self->mysqldump_databases : '';
 
-    my $myslqdump_cmd = sprintf("'%s %s %s %s %s > %s'",
+    my $myslqdump_cmd = sprintf("%s %s %s %s %s > %s",
         $mysqldump, $user, $password, $databases, $args, $rpath );
 
-    my $cmd = System::Command->new( $self->ssh_path, $host, $myslqdump_cmd );
+    my $cmd = spawn( $self->ssh_path, $host, $myslqdump_cmd );
+    $cmd->wait_child;
+
+    if( not $cmd->exit == 0 ) {
+        my $error = 'failed mysql before sync ';
+        for( $cmd->stderr->getlines ) { $error .= $_ }
+        croak $error;
+    };
+
     $cmd->close;
-    $cmd->exit;
 }
 
 sub sync {
@@ -96,15 +103,9 @@ sub sync {
     my $rpath = $self->remote_dump_path;
     my $path  = $self->user_at_host ne '' ?
                 $self->user_at_host.":$from/$rpath" : "$from/$rpath";
-
-    my $cmd   = System::Command->new( $self->scp_path, $path, $to );
+    my $cmd   = spawn( $self->scp_path, $path, $to );
+    $cmd->wait_child;
     $cmd->close;
-
-    # return 1 for good, undef for rest
-    # TODO: we don't really document the errors
-    # should we call die/croak? should we return arrayref with it?
-    # what about stdout vs. stderr? tricky stuff...
-    return $cmd->exit == 0 ? 1 : undef;
 }
 
 1;
