@@ -39,8 +39,10 @@ has repo => (
         ref $_[0] and ref $_[0] eq 'Git::Repository'
             or die 'repo must be a Git::Repository object'
     } ),
+    lazy      => 1,
     writer    => 'set_repo',
     predicate => 'has_repo',
+    builder   => '_build_repo',
 );
 
 has repo_dir => (
@@ -75,9 +77,16 @@ has plugin_objs => (
     builder => '_build_plugin_objs',
 );
 
+sub _build_repo {
+    my $self = shift;
+
+    Git::Repository->new( work_tree => $self->repo_dir )
+}
+
 sub _build_repo_dir {
     my $self = shift;
-    return File::Spec->catdir( $self->repos_dir, $self->name );
+
+    File::Spec->catdir( $self->repos_dir, $self->name );
 };
 
 sub _build_plugin_objs {
@@ -91,13 +100,13 @@ sub _build_plugin_objs {
         eval "use $class";
         $@ and die "Failed loading plugin $class: $@\n";
 
-        my @args =    $self->plugin_args->{$plugin}   ?
-                   @{ $self->plugin_args->{$plugin} } :
+        my %args =    $self->plugin_args->{$plugin}   ?
+                   %{ $self->plugin_args->{$plugin} } :
                    ();
 
         push @plugins, $class->new(
             gup => $self,
-            @args,
+            %args,
         );
     }
 
@@ -119,16 +128,18 @@ sub sync_repo {
     $self->has_source_dir or croak 'Must provide a source_dir';
 
     # Run method before_sync on all plunigs with BeforeSync role
-    $_->before_sync() foreach ( $self->find_plugins('-BeforeSync' ) );
+    $_->before_sync( $self->source_dir, $self->repo_dir )
+        foreach ( $self->find_plugins('-BeforeSync' ) );
 
-    # find all plugins that use a role Sync
-    # then run it
+    # find all plugins that use a role Sync then run it
     foreach my $plugin ( $self->find_plugins('-Sync' ) ) {
         $plugin->sync( $self->source_dir, $self->repo_dir );
     }
 
     # Run method before_sync on all plunigs with AfterSync role
     $_->after_sync() foreach ( $self->find_plugins('-AfterSync' ) );
+
+    $self;
 }
 
 # TODO: allow to control the git user and email for this
@@ -145,28 +156,27 @@ sub create_repo {
 
     # init new repo
     Git::Repository->run( init => $repo_dir );
-    my $repo = Git::Repository->new( work_tree => $repo_dir );
 
-    $repo->run( 'config', '--local', 'user.email', 'you@example.com' );
-    $repo->run( 'config', '--local', 'user.name', 'Your Name' );
+    $self->repo->run( 'config', '--local', 'user.email', 'you@example.com' );
+    $self->repo->run( 'config', '--local', 'user.name', 'Your Name' );
 
     # create HEAD and first commit
-    $repo->run( 'symbolic-ref', 'HEAD', 'refs/heads/master' );
-    $repo->run( commit => '--allow-empty', '-m', 'Initial commit' );
+    $self->repo->run( 'symbolic-ref', 'HEAD', 'refs/heads/master' );
+    $self->repo->run( commit => '--allow-empty', '-m', 'Initial commit' );
 
-    $self->set_repo($repo);
-
-    return $repo;
+    $self;
 }
 
 sub update_repo {
     my $self = shift;
 
     # Sync repo before
-    $self->sync_repo or croak 'sync_repo failed';
-    
+    $self->sync_repo;
+
     # Commit updates
-    return $self->commit_updates(@_);
+    $self->commit_updates(@_);
+
+    $self;
 }
 
 sub commit_updates {
@@ -179,13 +189,13 @@ sub commit_updates {
                   $opts{'message'}         :
                   'Gup commit: ' . strftime "%Y/%m/%d - %H:%M", localtime;
 
-    my $repo = $self->repo;
-
     # add all
-    $repo->run( 'add', '-A' );
+    $self->repo->run( 'add', '-A' );
 
     # commit update
-    return $self->repo->run( 'commit', '-a', '-m', $message );
+    $self->repo->run( 'commit', '-a', '-m', $message );
+
+    $self;
 }
 
 1;
