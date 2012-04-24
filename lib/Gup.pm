@@ -64,17 +64,17 @@ has plugins => (
     default => quote_sub( q{[]} ),
 );
 
-has plugin_args => (
+has plugins_args => (
     is      => 'ro',
     isa     => HashRef,
     default => quote_sub( q({}) ),
 );
 
-has plugin_objs => (
+has plugins_objs => (
     is      => 'ro',
     isa     => ArrayRef,
     lazy    => 1,
-    builder => '_build_plugin_objs',
+    builder => '_build_plugins_objs',
 );
 
 sub _build_repo {
@@ -89,7 +89,7 @@ sub _build_repo_dir {
     File::Spec->catdir( $self->repos_dir, $self->name );
 };
 
-sub _build_plugin_objs {
+sub _build_plugins_objs {
     my $self    = shift;
     my @plugins = ();
 
@@ -100,8 +100,8 @@ sub _build_plugin_objs {
         eval "use $class";
         $@ and die "Failed loading plugin $class: $@\n";
 
-        my %args =    $self->plugin_args->{$plugin}   ?
-                   %{ $self->plugin_args->{$plugin} } :
+        my %args =    $self->plugins_args->{$plugin}   ?
+                   %{ $self->plugins_args->{$plugin} } :
                    ();
 
         push @plugins, $class->new(
@@ -119,7 +119,7 @@ sub find_plugins {
 
     $role =~ s/^-/Gup::Role::/;
 
-    return grep { $_->does($role) } @{ $self->plugin_objs };
+    return grep { $_->does($role) } @{ $self->plugins_objs };
 }
 
 sub sync_repo {
