@@ -7,13 +7,21 @@ use Moo;
 use Carp;
 use Sub::Quote;
 use System::Command;
+use MooX::Types::MooseLike::Base qw/Str/;
 
 # requires us to add sync() method which will be run
 # XXX: for now provides username and host, which should be integrated here
 with 'Gup::Role::Sync';
 
-has args => (
+has rsync_path => (
     is      => 'ro',
+    isa     => Str,
+    default => quote_sub( q{'/usr/bin/rsync'} ),
+);
+
+has rsync_args => (
+    is      => 'ro',
+    isa     => Str,
     default => quote_sub(q{'-acz'}),
 );
 
@@ -32,8 +40,8 @@ sub sync {
     my $path = $host ? "$user\@$host:$from/" : "$from/";
 
     my $cmd  = System::Command->new(
-        'rsync',
-        $self->args,
+        $self->rsync_path,
+        $self->rsync_args,
         $path,
         $to,
         '--quiet',
