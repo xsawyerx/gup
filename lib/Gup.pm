@@ -3,11 +3,11 @@ use warnings;
 package Gup;
 
 use Moo;
-use Carp;
-use Try::Tiny;
 use Sub::Quote;
+use MooX::Types::MooseLike::Base qw/Str HashRef ArrayRef/;
+
+use Carp;
 use Git::Repository;
-use System::Command;
 
 use File::Path qw(mkpath);
 use POSIX qw(strftime);
@@ -15,86 +15,111 @@ use POSIX qw(strftime);
 has name => (
     is       => 'ro',
     isa      => quote_sub( q{
-        $_[0] =~ /^(?:[A-Za-z0-9_-]|\.)+$/ or die "Improper repo name: '$_[0]'\n";
+      $_[0] =~ /^(?:[A-Za-z0-9_-]|\.)+$/ or die "Improper repo name: '$_[0]'\n"
     } ),
     required => 1,
 );
 
-has sync_class => (
-    is      => 'ro',
-    default => quote_sub(q{'Rsync'}),
-);
-
 has configfile => (
     is      => 'ro',
+    isa     => Str,
     default => quote_sub(q{'/etc/gup/gup.yaml'}),
 );
 
 has repos_dir => (
     is      => 'ro',
+    isa     => Str,
     default => quote_sub(q{'/var/gup/repos'}),
 );
 
 has repo => (
     is        => 'ro',
+    isa       => Str,
     isa       => quote_sub( q{
         ref $_[0] and ref $_[0] eq 'Git::Repository'
             or die 'repo must be a Git::Repository object'
     } ),
+    lazy      => 1,
     writer    => 'set_repo',
     predicate => 'has_repo',
+    builder   => '_build_repo',
 );
 
 has repo_dir => (
     is      => 'ro',
+    isa     => Str,
     lazy    => 1,
     builder => '_build_repo_dir',
 );
 
-has syncer => (
-    is      => 'ro',
-    isa     => quote_sub( q{
-        ref( $_[0] ) and ref( $_[0] ) =~ /^\QGup::Sync::\E/
-            or die 'syncer must be a Gup::Sync:: object'
-    } ),
-    lazy    => 1,
-    builder => '_build_syncer',
-);
-
-has syncer_args => (
-    is      => 'ro',
-    isa     => quote_sub( q{
-        ref $_[0] and ref $_[0] eq 'ARRAY'
-            or die 'syncer_args must be an arrayref'
-    } ),
-    default => quote_sub( q{[]} ),
-);
-
 has source_dir => (
     is        => 'ro',
-    isa       => quote_sub( q{
-        defined $_[0] and length $_[0] > 0
-            or die 'source_dir must be provided';
-    } ),
+    isa       => Str,
     predicate => 'has_source_dir',
 );
 
+has plugins => (
+    is      => 'ro',
+    isa     => ArrayRef,
+    default => quote_sub( q{[]} ),
+);
+
+has plugins_args => (
+    is      => 'ro',
+    isa     => HashRef,
+    default => quote_sub( q({}) ),
+);
+
+has plugins_objs => (
+    is      => 'ro',
+    isa     => ArrayRef,
+    lazy    => 1,
+    builder => '_build_plugins_objs',
+);
+
+sub _build_repo {
+    my $self = shift;
+
+    Git::Repository->new( work_tree => $self->repo_dir )
+}
+
 sub _build_repo_dir {
     my $self = shift;
-    return File::Spec->catdir( $self->repos_dir, $self->name );
+
+    File::Spec->catdir( $self->repos_dir, $self->name );
 };
 
-sub _build_syncer {
-    my $self  = shift;
-    my $class = 'Gup::Sync::' . $self->sync_class;
+sub _build_plugins_objs {
+    my $self    = shift;
+    my @plugins = ();
 
-    {
+    foreach my $plugin ( @{ $self->plugins } ) {
+        my $class = "Gup::Plugin::$plugin";
+
         local $@ = undef;
         eval "use $class";
-        $@ and croak "Can't load $class: $@";
+        $@ and die "Failed loading plugin $class: $@\n";
+
+        my %args =    $self->plugins_args->{$plugin}   ?
+                   %{ $self->plugins_args->{$plugin} } :
+                   ();
+
+        push @plugins, $class->new(
+            gup => $self,
+            %args,
+        );
     }
 
-    return $class->new( @{ $self->syncer_args } );
+    return \@plugins;
+}
+
+sub find_plugins {
+    my $self = shift;
+    my $role = shift;
+
+    $role =~ s/^-/Gup::Role::/;
+
+    return grep { $_->does($role) } @{ $self->plugins_objs };
 }
 
 sub sync_repo {
@@ -102,7 +127,19 @@ sub sync_repo {
 
     $self->has_source_dir or croak 'Must provide a source_dir';
 
-    return $self->syncer->sync( $self->source_dir, $self->repo_dir );
+    # Run method before_sync on all plunigs with BeforeSync role
+    $_->before_sync( $self->source_dir, $self->repo_dir )
+        foreach ( $self->find_plugins('-BeforeSync' ) );
+
+    # find all plugins that use a role Sync then run it
+    foreach my $plugin ( $self->find_plugins('-Sync' ) ) {
+        $plugin->sync( $self->source_dir, $self->repo_dir );
+    }
+
+    # Run method before_sync on all plunigs with AfterSync role
+    $_->after_sync() foreach ( $self->find_plugins('-AfterSync' ) );
+
+    $self;
 }
 
 # TODO: allow to control the git user and email for this
@@ -119,28 +156,27 @@ sub create_repo {
 
     # init new repo
     Git::Repository->run( init => $repo_dir );
-    my $repo = Git::Repository->new( work_tree => $repo_dir );
 
-    $repo->run( 'config', '--local', 'user.email', 'you@example.com' );
-    $repo->run( 'config', '--local', 'user.name', 'Your Name' );
+    $self->repo->run( 'config', '--local', 'user.email', 'you@example.com' );
+    $self->repo->run( 'config', '--local', 'user.name', 'Your Name' );
 
     # create HEAD and first commit
-    $repo->run( 'symbolic-ref', 'HEAD', 'refs/heads/master' );
-    $repo->run( commit => '--allow-empty', '-m', 'Initial commit' );
+    $self->repo->run( 'symbolic-ref', 'HEAD', 'refs/heads/master' );
+    $self->repo->run( commit => '--allow-empty', '-m', 'Initial commit' );
 
-    $self->set_repo($repo);
-
-    return $repo;
+    $self;
 }
 
 sub update_repo {
     my $self = shift;
 
     # Sync repo before
-    $self->sync_repo or croak 'sync_repo failed';
-    
+    $self->sync_repo;
+
     # Commit updates
-    return $self->commit_updates(@_);
+    $self->commit_updates(@_);
+
+    $self;
 }
 
 sub commit_updates {
@@ -153,13 +189,13 @@ sub commit_updates {
                   $opts{'message'}         :
                   'Gup commit: ' . strftime "%Y/%m/%d - %H:%M", localtime;
 
-    my $repo = $self->repo;
-
     # add all
-    $repo->run( 'add', '-A' );
+    $self->repo->run( 'add', '-A' );
 
     # commit update
-    return $self->repo->run( 'commit', '-a', '-m', $message );
+    $self->repo->run( 'commit', '-a', '-m', $message );
+
+    $self;
 }
 
 1;

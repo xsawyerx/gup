@@ -9,16 +9,16 @@ use Test::File; # dir_exists, etc.
 use t::lib::Functions; # create_test_{dir,file}
 
 use File::Basename;
-use Gup::Sync::Rsync;
+use Gup::Plugin::Sync::Rsync;
 
 my $rsync;
 is(
-    exception { $rsync = Gup::Sync::Rsync->new },
+    exception { $rsync = Gup::Plugin::Sync::Rsync->new },
     undef,
     'Can create sync with host',
 );
 
-isa_ok( $rsync, 'Gup::Sync::Rsync' );
+isa_ok( $rsync, 'Gup::Plugin::Sync::Rsync' );
 
 my $from = t::lib::Functions::create_test_dir;
 my $to   = t::lib::Functions::create_test_dir;

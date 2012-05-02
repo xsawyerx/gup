@@ -18,4 +18,3 @@ is(
     undef,
     'Gup->new with name works',
 );
-
