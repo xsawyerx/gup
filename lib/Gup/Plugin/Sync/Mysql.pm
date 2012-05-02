@@ -7,7 +7,7 @@ use Moo;
 use Carp;
 use Sub::Quote;
 use MooX::Types::MooseLike::Base qw/Str/;
-use Sys::Cmd qw( spawn );
+use System::Command;
 
 with 'Gup::Role::Sync';
 with 'Gup::Role::BeforeSync';
@@ -81,19 +81,13 @@ sub before_sync {
     my $databases = $self->has_mysqldump_databases ?
                     '--databases '.$self->mysqldump_databases : '';
 
-    my $myslqdump_cmd = sprintf("%s %s %s %s %s > %s",
+    my $mysqldump_cmd = sprintf("%s %s %s %s %s > %s",
         $mysqldump, $user, $password, $databases, $args, $rpath );
 
-    my $cmd = spawn( $self->ssh_path, $host, $myslqdump_cmd );
-    $cmd->wait_child;
-
-    if( not $cmd->exit == 0 ) {
-        my $error = 'failed mysql before sync ';
-        for( $cmd->stderr->getlines ) { $error .= $_ }
-        croak $error;
-    };
-
+    #TODO: Get full log on error also from file. ( stdout going to file )
+    my $cmd = System::Command->new( $self->ssh_path, $host, $mysqldump_cmd );
     $cmd->close;
+    $cmd->exit == 0 or die "Cmd: '$mysqldump_cmd' failed on mysql sync";
 }
 
 sub sync {
@@ -103,8 +97,10 @@ sub sync {
     my $rpath = $self->remote_dump_path;
     my $path  = $self->user_at_host ne '' ?
                 $self->user_at_host.":$from/$rpath" : "$from/$rpath";
-    my $cmd   = spawn( $self->scp_path, $path, $to );
-    $cmd->wait_child;
+    my $cmd   = System::Command->new( $self->scp_path, $path, $to );
+    $cmd->_reap;
+    $cmd->exit == 0
+        or die "Failed to sync mysql:\n".join("\n",$cmd->stderr->getlines);
     $cmd->close;
 }
 
