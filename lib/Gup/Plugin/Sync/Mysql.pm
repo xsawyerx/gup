@@ -8,6 +8,7 @@ use Carp;
 use Sub::Quote;
 use MooX::Types::MooseLike::Base qw/Str/;
 use System::Command;
+use Spec::File qw( catfile );
 
 with 'Gup::Role::Sync';
 with 'Gup::Role::BeforeSync';
@@ -65,8 +66,8 @@ sub _build_user_at_host {
 
 sub before_sync {
     my $self      = shift;
-    my $from      = shift;
     my $to        = shift;
+    my $from      = $self->source_dir;
     my $scp       = $self->scp_path;
     my $ssh       = $self->ssh_path;
     my $host      = $self->user_at_host;
@@ -81,10 +82,12 @@ sub before_sync {
     my $databases = $self->has_mysqldump_databases ?
                     '--databases '.$self->mysqldump_databases : '';
 
+    # Build mysqldump command to run on remote server
     my $mysqldump_cmd = sprintf("%s %s %s %s %s > %s",
         $mysqldump, $user, $password, $databases, $args, $rpath );
 
     #TODO: Get full log on error also from file. ( stdout going to file )
+    # Run mysqldump command on remote server
     my $cmd = System::Command->new( $self->ssh_path, $host, $mysqldump_cmd );
     $cmd->close;
     $cmd->exit == 0 or die "Cmd: '$mysqldump_cmd' failed on mysql sync";
@@ -92,12 +95,15 @@ sub before_sync {
 
 sub sync {
     my $self  = shift;
-    my $from  = shift;
     my $to    = shift;
-    my $rpath = $self->remote_dump_path;
-    my $path  = $self->user_at_host ne '' ?
-                $self->user_at_host.":$from/$rpath" : "$from/$rpath";
+
+    # Math from where get the mysql dump
+    my $path  = ( $self->user_at_host ne '' ? $self->user_at_host.':' : '' )
+              . ( catfile( $self->source_dir, $self->remote_dump_path ) );
+
+    # Copy mysql dump to repo dir
     my $cmd   = System::Command->new( $self->scp_path, $path, $to );
+
     $cmd->_reap;
     $cmd->exit == 0
         or die "Failed to sync mysql:\n".join("\n",$cmd->stderr->getlines);

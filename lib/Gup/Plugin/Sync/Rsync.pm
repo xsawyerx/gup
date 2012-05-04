@@ -27,9 +27,9 @@ has rsync_args => (
 
 sub sync {
     my $self = shift;
+    my $to   = shift;
     my $gup  = $self->gup;
-
-    my ( $from, $to ) = @_;
+    my $from = $self->source_dir;
 
     # TODO: move this into the Sync role and remove form here
     length $from && length $to
