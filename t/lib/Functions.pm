@@ -5,6 +5,13 @@ package t::lib::Functions;
 use File::Spec;
 use File::Temp;
 
+sub create_test_gup {
+    my $temp_dir = create_test_dir();
+
+    require Gup;
+    Gup->new( repo_dir => $temp_dir );
+}
+
 sub create_test_dir {
     my $dir = shift;
 
