@@ -15,7 +15,7 @@ use POSIX qw(strftime);
 
 has repo_dir  => (
     is        => 'ro',
-    isa       => quote_sub( q{ -d $_[0] or die 'repo_dir should be dir' } ),
+    isa       => Str,
     required  => 1,
 );
 
