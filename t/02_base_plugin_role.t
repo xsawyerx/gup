@@ -1,8 +1,7 @@
 use strict;
 use warnings;
-use Test::More;
+use Test::More tests => 2;
 use Test::Fatal;
-
 use t::lib::Functions;
 
 use Gup;
@@ -13,16 +12,12 @@ use Gup;
     with 'Gup::Role::Plugin';
 }
 
-plan tests => 2;
-
 like(
     exception { Gup::TestPlugin->new },
     qr/^Missing required arguments: gup/,
-    'Gup->new requires a repo_dir',
+    'Gup::Role::Plugin requires a gup',
 );
 
 my $gup = t::lib::Functions::create_test_gup;
 
 isa_ok( Gup::TestPlugin->new( gup => $gup ), 'Gup::TestPlugin' );
-
-done_testing;

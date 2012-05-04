@@ -1,10 +1,8 @@
 use strict;
 use warnings;
-use Test::More;
+use Test::More tests => 3;
 use Test::Fatal;
 use t::lib::Functions;
-
-plan tests => 3;
 
 use_ok( 'Gup' );
 
@@ -17,5 +15,3 @@ like(
 my $temp_dir = t::lib::Functions::create_test_dir();
 
 isa_ok( Gup->new( repo_dir => $temp_dir ), 'Gup' );
-
-done_testing;
