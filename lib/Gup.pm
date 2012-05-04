@@ -9,6 +9,7 @@ use MooX::Types::MooseLike::Base qw/Str HashRef ArrayRef/;
 use Carp;
 use Git::Repository;
 
+use Class::Load qw(load_class);
 use File::Path qw(mkpath);
 use POSIX qw(strftime);
 
@@ -68,7 +69,7 @@ sub _build_plugins_objs {
         my $class = "Gup::Plugin::$plugin";
 
         local $@ = undef;
-        eval "use $class";
+        load_class( $class );
         $@ and die "Failed loading plugin $class: $@\n";
 
         my %args =    $self->plugins_args->{$plugin}   ?
@@ -96,19 +97,14 @@ sub find_plugins {
 sub sync_repo {
     my $self = shift;
 
-    $self->has_source_dir or croak 'Must provide a source_dir';
-
     # Run method before_sync on all plunigs with BeforeSync role
-    $_->before_sync( $self->repo_dir )
-        foreach ( $self->find_plugins('-BeforeSync' ) );
+    $_->before_sync() foreach ( $self->find_plugins('-BeforeSync' ) );
 
     # find all plugins that use a role Sync then run it
-    foreach my $plugin ( $self->find_plugins('-Sync' ) ) {
-        $plugin->sync( $self->repo_dir );
-    }
+    $_->sync()        foreach ( $self->find_plugins('-Sync' ) );
 
     # Run method before_sync on all plunigs with AfterSync role
-    $_->after_sync() foreach ( $self->find_plugins('-AfterSync' ) );
+    $_->after_sync()  foreach ( $self->find_plugins('-AfterSync' ) );
 
     $self;
 }
