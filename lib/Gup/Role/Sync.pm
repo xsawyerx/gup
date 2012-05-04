@@ -12,6 +12,12 @@ requires 'sync';
 
 with 'Gup::Role::Plugin';
 
+has source_dir => (
+    is       => 'ro',
+    isa      => Str,
+    required => 1,
+);
+
 has ssh_path => (
     is       => 'ro',
     isa      => Str,
