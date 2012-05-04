@@ -1,5 +1,4 @@
 * Add arguments to plugins + tests
-* Add BeforeSync, AfterSync
 * Add BeforeCreateRepo, AfterCreateRepo, BeforeUpdateRepo, AfterUpdateRepo
 * Add BeforeCommitUpdated, AfterCommitUpdates
 
