@@ -12,44 +12,21 @@ use Git::Repository;
 use File::Path qw(mkpath);
 use POSIX qw(strftime);
 
-has name => (
-    is       => 'ro',
-    isa      => quote_sub( q{
-      $_[0] =~ /^(?:[A-Za-z0-9_-]|\.)+$/ or die "Improper repo name: '$_[0]'\n"
-    } ),
-    required => 1,
+has repo_dir  => (
+    is        => 'ro',
+    isa       => quote_sub( q{ -d $_[0] or die 'repo_dir should be dir' } ),
+    required  => 1,
 );
 
-has configfile => (
-    is      => 'ro',
-    isa     => Str,
-    default => quote_sub(q{'/etc/gup/gup.yaml'}),
-);
-
-has repos_dir => (
-    is      => 'ro',
-    isa     => Str,
-    default => quote_sub(q{'/var/gup/repos'}),
-);
-
-has repo => (
+has repo      => (
     is        => 'ro',
     isa       => Str,
     isa       => quote_sub( q{
         ref $_[0] and ref $_[0] eq 'Git::Repository'
             or die 'repo must be a Git::Repository object'
     } ),
-    lazy      => 1,
-    writer    => 'set_repo',
-    predicate => 'has_repo',
     builder   => '_build_repo',
-);
-
-has repo_dir => (
-    is      => 'ro',
-    isa     => Str,
-    lazy    => 1,
-    builder => '_build_repo_dir',
+    lazy      => 1,
 );
 
 has source_dir => (
@@ -58,23 +35,23 @@ has source_dir => (
     predicate => 'has_source_dir',
 );
 
-has plugins => (
-    is      => 'ro',
-    isa     => ArrayRef,
-    default => quote_sub( q{[]} ),
+has plugins   => (
+    is        => 'ro',
+    isa       => ArrayRef,
+    default   => quote_sub( q{[]} ),
 );
 
 has plugins_args => (
-    is      => 'ro',
-    isa     => HashRef,
-    default => quote_sub( q({}) ),
+    is        => 'ro',
+    isa       => HashRef,
+    default   => quote_sub( q({}) ),
 );
 
 has plugins_objs => (
-    is      => 'ro',
-    isa     => ArrayRef,
-    lazy    => 1,
-    builder => '_build_plugins_objs',
+    is        => 'ro',
+    isa       => ArrayRef,
+    lazy      => 1,
+    builder   => '_build_plugins_objs',
 );
 
 sub _build_repo {
@@ -82,12 +59,6 @@ sub _build_repo {
 
     Git::Repository->new( work_tree => $self->repo_dir )
 }
-
-sub _build_repo_dir {
-    my $self = shift;
-
-    File::Spec->catdir( $self->repos_dir, $self->name );
-};
 
 sub _build_plugins_objs {
     my $self    = shift;
@@ -110,7 +81,7 @@ sub _build_plugins_objs {
         );
     }
 
-    return \@plugins;
+    \@plugins;
 }
 
 sub find_plugins {
@@ -119,7 +90,7 @@ sub find_plugins {
 
     $role =~ s/^-/Gup::Role::/;
 
-    return grep { $_->does($role) } @{ $self->plugins_objs };
+    grep { $_->does($role) } @{ $self->plugins_objs };
 }
 
 sub sync_repo {
@@ -128,12 +99,12 @@ sub sync_repo {
     $self->has_source_dir or croak 'Must provide a source_dir';
 
     # Run method before_sync on all plunigs with BeforeSync role
-    $_->before_sync( $self->source_dir, $self->repo_dir )
+    $_->before_sync( $self->repo_dir )
         foreach ( $self->find_plugins('-BeforeSync' ) );
 
     # find all plugins that use a role Sync then run it
     foreach my $plugin ( $self->find_plugins('-Sync' ) ) {
-        $plugin->sync( $self->source_dir, $self->repo_dir );
+        $plugin->sync( $self->repo_dir );
     }
 
     # Run method before_sync on all plunigs with AfterSync role
