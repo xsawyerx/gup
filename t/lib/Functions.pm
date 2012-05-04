@@ -8,13 +8,10 @@ use File::Temp;
 sub create_test_dir {
     my $dir = shift;
 
-    # create a directory
-    my $test_dir = File::Temp::tempdir(
-        DIR => $dir,
-        $ENV{'GUP_KEEPDIR'} ? () : ( CLEANUP => 1 ),
+    File::Temp::tempdir(
+        DIR     => $dir,
+        CLEANUP => not $ENV{GUP_KEEP_TEST_DIR},
     );
-
-    return $test_dir;
 }
 
 sub create_test_file {
