@@ -7,8 +7,8 @@ use Test::File; # dir_exists, etc.
 use t::lib::Functions; # create_test_{dir,file}
 use File::Basename;
 
-my $to   = t::lib::Functions::create_test_dir;
 my $from = t::lib::Functions::create_test_dir;
+my $to   = t::lib::Functions::create_test_dir;
 my $gup  = t::lib::Functions::create_test_gup($to);
 
 use_ok ( 'Gup::Plugin::Sync::Rsync' );
@@ -26,7 +26,7 @@ like(
 );
 
 my $rsync = Gup::Plugin::Sync::Rsync->new(
-    source_dir => $from,
+    source_dir => $from.'/',
     gup        => $gup,
 );
 
