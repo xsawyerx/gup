@@ -8,7 +8,7 @@ use Carp;
 use Sub::Quote;
 use MooX::Types::MooseLike::Base qw/Str/;
 use System::Command;
-use Spec::File qw( catfile );
+use File::Spec;
 
 with 'Gup::Role::Sync';
 with 'Gup::Role::BeforeSync';
@@ -96,10 +96,11 @@ sub before_sync {
 sub sync {
     my $self  = shift;
     my $to    = shift;
+    my $from  = File::Spec->catfile($self->source_dir,$self->remote_dump_path);
 
     # Math from where get the mysql dump
     my $path  = ( $self->user_at_host ne '' ? $self->user_at_host.':' : '' )
-              . ( catfile( $self->source_dir, $self->remote_dump_path ) );
+              . ( $from );
 
     # Copy mysql dump to repo dir
     my $cmd   = System::Command->new( $self->scp_path, $path, $to );
