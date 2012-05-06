@@ -95,7 +95,7 @@ sub before_sync {
 
 sub sync {
     my $self  = shift;
-    my $to    = shift;
+    my $to    = $self->{gup}->repo_dir;
     my $from  = File::Spec->catfile($self->source_dir,$self->remote_dump_path);
 
     # Math from where get the mysql dump
