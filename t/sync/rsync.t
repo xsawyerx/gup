@@ -1,17 +1,17 @@
 use strict;
 use warnings;
 
-use Test::More  tests => 11;
+use Test::More  tests => 12;
 use Test::Fatal 'exception';
 use Test::File; # dir_exists, etc.
 use t::lib::Functions; # create_test_{dir,file}
-
 use File::Basename;
-use Gup::Plugin::Sync::Rsync;
 
 my $to   = t::lib::Functions::create_test_dir;
 my $from = t::lib::Functions::create_test_dir;
 my $gup  = t::lib::Functions::create_test_gup($to);
+
+use_ok ( 'Gup::Plugin::Sync::Rsync' );
 
 like(
     exception { Gup::Plugin::Sync::Rsync->new },
@@ -34,8 +34,6 @@ isa_ok( $rsync, 'Gup::Plugin::Sync::Rsync' );
 
 # create a file in $from directory
 my $file = t::lib::Functions::create_test_file($from);
-
-diag( $file );
 
 file_exists_ok(    $file, "Created file $file" );
 file_not_empty_ok( $file, 'It is not empty'    );
