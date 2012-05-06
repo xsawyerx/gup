@@ -43,10 +43,10 @@ has mysqldump_args => (
     predicate => 'has_mysqldump_args',
 );
 
-has remote_dump_path => (
+has mysqldump_file => (
     is        => 'ro',
     isa       => Str,
-    default   => quote_sub(q{'dump.sql'}),
+    default   => quote_sub(q{'/tmp/dump.sql'}),
 );
 
 has user_at_host => (
@@ -66,12 +66,8 @@ sub _build_user_at_host {
 
 sub before_sync {
     my $self      = shift;
-    my $to        = shift;
-    my $from      = $self->source_dir;
-    my $scp       = $self->scp_path;
-    my $ssh       = $self->ssh_path;
     my $host      = $self->user_at_host;
-    my $rpath     = $from.'/'.$self->remote_dump_path;
+    my $rpath     = $self->mysqldump_file;
     my $mysqldump = $self->mysqldump_path;
     my $args      = $self->has_mysqldump_args ?
                     $self->mysqldump_args : '';
@@ -86,7 +82,6 @@ sub before_sync {
     my $mysqldump_cmd = sprintf("%s %s %s %s %s > %s",
         $mysqldump, $user, $password, $databases, $args, $rpath );
 
-    #TODO: Get full log on error also from file. ( stdout going to file )
     # Run mysqldump command on remote server
     my $cmd = System::Command->new( $self->ssh_path, $host, $mysqldump_cmd );
     $cmd->close;
@@ -96,18 +91,17 @@ sub before_sync {
 sub sync {
     my $self  = shift;
     my $to    = $self->{gup}->repo_dir;
-    my $from  = File::Spec->catfile($self->source_dir,$self->remote_dump_path);
+    my $from  = $self->mysqldump_file;
 
-    # Math from where get the mysql dump
-    my $path  = ( $self->user_at_host ne '' ? $self->user_at_host.':' : '' )
-              . ( $from );
+    # Build remote path
+    my $host  = ( $self->user_at_host ne '' ? $self->user_at_host.':' : '' );
+    my $rpath = $host.$from;
 
     # Copy mysql dump to repo dir
-    my $cmd   = System::Command->new( $self->scp_path, $path, $to );
+    my $cmd   = System::Command->new( $self->scp_path, $rpath, $to );
 
     $cmd->_reap;
-    $cmd->exit == 0
-        or die "Failed to sync mysql:\n".join("\n",$cmd->stderr->getlines);
+    $cmd->exit == 0 or die "Failed to sync mysql 'scp $rpath $to'";
     $cmd->close;
 }
 
