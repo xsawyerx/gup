@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 3;
+use Test::More tests => 2;
 use Test::Fatal;
 use t::lib::Functions;
 
@@ -23,17 +23,9 @@ like(
     'Gup::Role::Sync requires a sync method',
 );
 
-my $gup = t::lib::Functions::create_test_gup;
-
-like(
-    exception { Gup::TestSync->new( gup => $gup ) },
-    qr/^Missing required arguments: source_dir/,
-    'Gup::Role::Sync requires a source_dir',
-);
-
 isa_ok(
     Gup::TestSync->new(
-        gup        => $gup,
+        gup        => t::lib::Functions::create_test_gup,
         source_dir => 'test_remote_dir',
     ),
     'Gup::TestSync',
