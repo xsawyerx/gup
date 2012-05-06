@@ -27,14 +27,9 @@ has rsync_args => (
 
 sub sync {
     my $self = shift;
-    my $to   = shift;
-    my $gup  = $self->gup;
+    my $gup  = $self->{gup}; # TODO: Fix this
+    my $to   = $gup->repo_dir;
     my $from = $self->source_dir;
-
-    # TODO: move this into the Sync role and remove form here
-    length $from && length $to
-        or croak "sync( FROM, TO )";
-
     my $host = $self->host;
     my $user = $self->username;
     my $path = $host ? "$user\@$host:$from/" : "$from/";
