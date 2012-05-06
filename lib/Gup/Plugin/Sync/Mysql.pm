@@ -11,12 +11,19 @@ use System::Command;
 use File::Spec;
 
 with 'Gup::Role::Sync';
+with 'Gup::Role::SSHAuth';
 with 'Gup::Role::BeforeSync';
 
 has mysqldump_path => (
     is        => 'ro',
     isa       => Str,
     default   => quote_sub(q{'/usr/bin/mysqldump'}),
+);
+
+has mysqldump_file => (
+    is        => 'ro',
+    isa       => Str,
+    default   => quote_sub(q{'/tmp/dump.sql'}),
 );
 
 has mysqldump_user => (
@@ -43,30 +50,9 @@ has mysqldump_args => (
     predicate => 'has_mysqldump_args',
 );
 
-has mysqldump_file => (
-    is        => 'ro',
-    isa       => Str,
-    default   => quote_sub(q{'/tmp/dump.sql'}),
-);
-
-has user_at_host => (
-    is        => 'ro',
-    isa       => Str,
-    lazy      => 1,
-    builder   => '_build_user_at_host',
-);
-
-sub _build_user_at_host {
-    my $self = shift;
-    my $host = $self->host;
-    my $user = $self->username;
-
-    $self->has_host ? "$user\@$host" : '';
-}
-
 sub before_sync {
     my $self      = shift;
-    my $host      = $self->user_at_host;
+    my $rhost     = $self->auth_host;
     my $rpath     = $self->mysqldump_file;
     my $mysqldump = $self->mysqldump_path;
     my $args      = $self->has_mysqldump_args ?
@@ -83,7 +69,7 @@ sub before_sync {
         $mysqldump, $user, $password, $databases, $args, $rpath );
 
     # Run mysqldump command on remote server
-    my $cmd = System::Command->new( $self->ssh_path, $host, $mysqldump_cmd );
+    my $cmd = System::Command->new( $self->ssh_path, $rhost, $mysqldump_cmd );
     $cmd->close;
     $cmd->exit == 0 or die "Cmd: '$mysqldump_cmd' failed on mysql sync";
 }
@@ -92,12 +78,7 @@ sub sync {
     my $self  = shift;
     my $to    = $self->{gup}->repo_dir;
     my $from  = $self->mysqldump_file;
-
-    # Build remote path
-    my $host  = ( $self->user_at_host ne '' ? $self->user_at_host.':' : '' );
-    my $rpath = $host.$from;
-
-    # Copy mysql dump to repo dir
+    my $rpath = $self->get_auth_path($from);
     my $cmd   = System::Command->new( $self->scp_path, $rpath, $to );
 
     $cmd->_reap;
