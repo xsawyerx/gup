@@ -13,6 +13,12 @@ use MooX::Types::MooseLike::Base qw/Str/;
 # XXX: for now provides username and host, which should be integrated here
 with 'Gup::Role::Sync';
 
+has source_dir => (
+    is       => 'ro',
+    isa      => Str,
+    required => 1,
+);
+
 has rsync_path => (
     is      => 'ro',
     isa     => Str,
