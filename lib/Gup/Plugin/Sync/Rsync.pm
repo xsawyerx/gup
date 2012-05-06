@@ -12,6 +12,7 @@ use MooX::Types::MooseLike::Base qw/Str/;
 # requires us to add sync() method which will be run
 # XXX: for now provides username and host, which should be integrated here
 with 'Gup::Role::Sync';
+with 'Gup::Role::SSHAuth';
 
 has source_dir => (
     is       => 'ro',
@@ -32,18 +33,15 @@ has rsync_args => (
 );
 
 sub sync {
-    my $self = shift;
-    my $gup  = $self->{gup}; # TODO: Fix this
-    my $to   = $gup->repo_dir;
-    my $from = $self->source_dir;
-    my $host = $self->host;
-    my $user = $self->username;
-    my $path = $host ? "$user\@$host:$from/" : "$from/";
-
-    my $cmd  = System::Command->new(
+    my $self  = shift;
+    my $gup   = $self->{gup}; # TODO: Fix this
+    my $to    = $gup->repo_dir;
+    my $from  = $self->source_dir;
+    my $rpath = $self->get_auth_path($from);
+    my $cmd   = System::Command->new(
         $self->rsync_path,
         $self->rsync_args,
-        $path,
+        $rpath,
         $to,
         '--quiet',
         '--delete',
