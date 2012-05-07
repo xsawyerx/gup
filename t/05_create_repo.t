@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More  tests => 7;
+use Test::More  tests => 8;
 use Test::File;
 use t::lib::Functions;
 
@@ -8,6 +8,8 @@ use Gup;
 
 my $dir = File::Spec->catdir( t::lib::Functions::create_test_dir, 'test_gup' );
 my $gup = Gup->new( repo_dir => $dir );
+
+can_ok( $gup, 'create_repo' );
 
 $gup->create_repo;
 
